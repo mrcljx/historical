@@ -3,9 +3,46 @@ require 'test_helper'
 class MergeTest < ActiveSupport::TestCase
   load_schema
   
-  context "A mergeable Post instance" do
+  context "A non-mergeable Post instance" do
     setup do
       @post = Post.create!(:topic => "hello world", :content => "dlrow olleh")
+    end
+    
+    should "not merge changes" do
+        @post.topic = "bye world"
+        @post.save!
+        @post.topic = "i leave you now"
+        @post.save!
+        @post.reload
+        
+        assert_equal 2, @post.versions.count
+        assert_equal 2, @post.attribute_changes.count
+      end
+  end
+  
+  context "A mergeable Post instance" do
+    setup do
+      @post = MergeablePost.create!(:topic => "hello world", :content => "dlrow olleh")
+    end
+    
+    context "which has been changed 3 minutes ago" do
+      setup do
+        @post.topic = "hello world again"
+        @post.save!
+        @post.reload
+        @post.versions.first.update_attributes!(:created_at => 3.minute.ago)
+        @post.reload
+      end
+      
+      should "not merge changes" do
+        @post.topic = "bye world"
+        @post.content = "i leave you now"
+        @post.save!
+        @post.reload
+        
+        assert_equal 2, @post.versions.count
+        assert_equal 3, @post.attribute_changes.count
+      end
     end
 
     context "which has been changed a minute ago" do
