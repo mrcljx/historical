@@ -3,7 +3,7 @@ require 'test_helper'
 class HistoricalTest < ActiveSupport::TestCase
   load_schema
   
-  context "A mergeable Post instance" do
+  context "A Post instance" do
     setup do
       @post = Post.create!(:topic => "hello world", :content => "dlrow olleh")
     end

@@ -11,7 +11,7 @@ class Version < ActiveRecord::Base
   belongs_to :target, :polymorphic => true
   belongs_to :author, :polymorphic => true
   
-  has_many :attribute_changes
+  has_many :attribute_changes, :dependent => :destroy
   
   before_validation_on_create do |model|
     if model.target
@@ -21,10 +21,16 @@ class Version < ActiveRecord::Base
   
   def merge!(changes)
     raise "cannot merge! a new_record" if new_record?
-    changes.collect do |attribute, diff|
+    
+    changes.each do |attribute, diff|
       change = attribute_changes.find_or_initialize_by_attribute(attribute.to_s)
-      change.update_by_diff(diff)
-      change.save!
+      if change.update_by_diff(diff)
+        change.save!
+      else
+        change.destroy
+      end
     end
+    
+    self.destroy if attribute_changes(:reload).empty?
   end
 end

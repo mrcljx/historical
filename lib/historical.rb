@@ -17,7 +17,7 @@ module Historical
   
     def historical(*args)
       send :include, InstanceMethods
-      has_many :versions, :as => :target
+      has_many :versions, :as => :target, :dependent => :destroy
       has_many :attribute_changes, :through => :versions
       
       after_update do |model|

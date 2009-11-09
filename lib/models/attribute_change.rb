@@ -14,6 +14,8 @@ class AttributeChange < ActiveRecord::Base
     
     self.new_value = diff[1]
     self.new_class = diff[1].class.name
+    
+    old != new
   end
   
   def old

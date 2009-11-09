@@ -3,7 +3,7 @@ require 'test_helper'
 class MergeTest < ActiveSupport::TestCase
   load_schema
   
-  context "A Post instance" do
+  context "A mergeable Post instance" do
     setup do
       @post = Post.create!(:topic => "hello world", :content => "dlrow olleh")
     end
@@ -17,7 +17,7 @@ class MergeTest < ActiveSupport::TestCase
         @post.reload
       end
 
-      should "merge changes within a specified time distance" do
+      should "merge changes" do
         @post.topic = "bye world"
         @post.content = "i leave you now"
         @post.save!
@@ -38,6 +38,22 @@ class MergeTest < ActiveSupport::TestCase
 
         assert_equal "dlrow olleh", content_change.old
         assert_equal "i leave you now", content_change.new
+      end
+      
+      should "not eliminate versions with partial reverts" do
+        @post.topic = "hello world"
+        @post.content = "something else"
+        @post.save!
+        @post.reload
+        assert_equal 1, @post.versions.count
+        assert_equal 1, @post.attribute_changes.count
+      end
+      
+      should "eliminate versions with exact reverts" do
+        @post.topic = "hello world"
+        @post.save!
+        @post.reload
+        assert_equal 0, @post.versions.count
       end
     end
   end
