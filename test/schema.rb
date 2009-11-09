@@ -3,6 +3,16 @@ ActiveRecord::Schema.define(:version => 0) do
     t.string :topic
     t.text :content
     t.integer :author_id
+    t.integer :rating
+    t.timestamps
+  end
+  create_table :persons, :force => true do |t|
+    t.string :email
+    t.timestamps
+  end
+  create_table :accounts, :force => true do |t|
+    t.string :login
+    t.string :password
     t.timestamps
   end
   create_table :versions, :force => true do |t|
