@@ -11,6 +11,9 @@ begin
     gem.email = "marcel@northdocks.com"
     gem.homepage = "http://github.com/sirlantis/historical"
     gem.authors = ["Marcel Jackwerth"]
+    
+    gem.add_development_dependency 'shoulda'
+    gem.add_development_dependency 'mocha'
   end
   Jeweler::GemcutterTasks.new
 rescue LoadError
