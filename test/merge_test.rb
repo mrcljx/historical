@@ -1,6 +1,8 @@
 require 'test_helper'
 
 class MergeTest < ActiveSupport::TestCase
+  load_schema
+  
   context "A Post instance" do
     setup do
       @post = Post.create!(:topic => "hello world", :content => "dlrow olleh")

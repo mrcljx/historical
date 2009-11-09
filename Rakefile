@@ -34,6 +34,12 @@ Rake::TestTask.new(:test) do |t|
   t.verbose = true
 end
 
+desc 'Lists all tests.'
+task :"shoulda:list" do |t|
+  require 'shoulda/tasks'
+  Rake::Task[:"shoulda:list"].invoke
+end
+
 desc 'Generate documentation for the historical plugin.'
 Rake::RDocTask.new(:rdoc) do |rdoc|
   rdoc.rdoc_dir = 'rdoc'
