@@ -6,7 +6,8 @@ ActiveRecord::Schema.define(:version => 0) do
     t.integer :rating
     t.timestamps
   end
-  create_table :persons, :force => true do |t|
+  create_table :people, :force => true do |t|
+    t.string :name
     t.string :email
     t.timestamps
   end

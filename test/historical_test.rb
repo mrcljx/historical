@@ -3,6 +3,42 @@ require 'test_helper'
 class HistoricalTest < ActiveSupport::TestCase
   load_schema
   
+  context "A person (:only => email) instance" do
+    setup do
+      @person = Person.create!(:name => "max", :email => "max@example.com")
+    end
+    
+    should "only track email updates" do
+      @person.name = "peter"
+      @person.email = "peter@example.com"
+      @person.save!
+      @person.reload
+      
+      assert_equal 1, @person.versions.count
+      assert_equal ["email"], @person.attribute_changes.collect { |x| x.attribute }
+    end
+  end
+  
+  class Account < ActiveRecord::Base
+    historical :except => :password, :timestamps => true
+  end
+  
+  context "An account instance" do
+    setup do
+      @account = Account.create!(:login => "jane", :password => "doe")
+    end
+    
+    should "track timestamp updates but not password updates" do
+      @account.login = "john"
+      @account.password = "wayne"
+      @account.save!
+      @account.reload
+      
+      assert_equal 1, @account.versions.count
+      assert_equal ["login", "updated_at"].to_set, @account.attribute_changes.collect{ |x| x.attribute }.to_set
+    end
+  end
+  
   context "A Post instance" do
     setup do
       @post = Post.create!(:topic => "hello world", :content => "dlrow olleh")
