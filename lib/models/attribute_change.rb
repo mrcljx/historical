@@ -6,6 +6,11 @@ class AttributeChange < ActiveRecord::Base
   
   belongs_to :version
   
+  # Populates/updates the +AttributeChange+ model. Will only update the
+  # +new+ field if the model was already persisted.
+  #
+  # Returns false if +old+ equals +new+. This is used as in indicator for
+  # +version.merge!+ that this +AttributeChange+ should be destroyed.
   def update_by_diff(diff)
     if new_record?
       self.old_value = diff[0]
@@ -18,12 +23,11 @@ class AttributeChange < ActiveRecord::Base
     old != new
   end
   
-  def old
+  def old # :nodoc:
     old_value	   
   end
   
-  def new
+  def new # :nodoc:
     new_value	   
   end
-  
 end

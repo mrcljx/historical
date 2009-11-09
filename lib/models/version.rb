@@ -13,24 +13,25 @@ class Version < ActiveRecord::Base
   
   has_many :attribute_changes, :dependent => :destroy
   
+  # Sets the +version+ number (simply the next available number determined via SQL).
   before_validation_on_create do |model|
     if model.target
       model.version = model.target.new_record? ? 1 : (model.target.versions.maximum(:version) || 0) + 1
     end
   end
   
+  # Will apply a set of +changes+ (retrieved via Rails' dirty changes) and
+  # delete +AttributeChanges+ where necessary. If all changes are destroyed
+  # by this the +Version+ will destroy itself.
   def merge!(changes)
     raise "cannot merge! a new_record" if new_record?
     
-    changes.each do |attribute, diff|
-      change = attribute_changes.find_or_initialize_by_attribute(attribute.to_s)
-      if change.update_by_diff(diff)
-        change.save!
-      else
-        change.destroy
+    Version.transaction do
+      changes.each do |attribute, diff|
+        change = attribute_changes.find_or_initialize_by_attribute(attribute.to_s)
+        change.update_by_diff(diff) ? change.save! : change.destroy
       end
+      self.destroy if attribute_changes(:reload).empty?
     end
-    
-    self.destroy if attribute_changes(:reload).empty?
   end
 end
