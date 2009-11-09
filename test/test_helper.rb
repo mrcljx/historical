@@ -9,7 +9,6 @@ require 'test/unit'
 require 'shoulda'
 require File.expand_path(File.join(ENV['RAILS_ROOT'], 'config/environment.rb'))
 
-require 'models/account'
 require 'models/person'
 require 'models/post'
 
