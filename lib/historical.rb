@@ -99,8 +99,11 @@ module Historical
   module InstanceMethods
     def as_version(version_number)
       version_number = version_number.to_i
-      raise ActiveRecord::RecordNotFound, "negative version numbers are illegal" if version_number < 0
-      fake = self.clone
+      raise ActiveRecord::RecordNotFound, "version number is negative" if version_number < 0
+      
+      fake = self.class.find(id)
+      raise ActiveRecord::RecordNotFound, "version number is in the future" if version_number > fake.versions.most_recent.first.version
+      
       self.class.columns.each do |col|
         # no need to join manually, because it's a has_many :through relation
         change = attribute_changes.first(:conditions => ["versions.version > ? AND attribute_changes.attribute = ?", version_number, col.name],

@@ -14,6 +14,7 @@ class MergeTest < ActiveSupport::TestCase
       @post.reload
       
       assert_equal 5, @post.versions(:reload).count
+      assert_equal [1,2,3,4,5].to_set, @post.versions.collect{ |v| v.version }.to_set
     end
     
     should "be able to time-travel" do
@@ -40,6 +41,18 @@ class MergeTest < ActiveSupport::TestCase
       assert_equal "Home Sweet Home", @old.content
     end
     
+    should "allow time-travel to self" do
+      assert_nothing_raised do
+        @post.as_version(@post.versions.most_recent.first.version)
+      end
+    end
+    
+    should "not allow time-travel to the future" do
+      assert_raise ActiveRecord::RecordNotFound do
+        @post.as_version(@post.versions.most_recent.first.version + 1)
+      end
+    end
+    
     should "not allow to find negative version numbers" do
       assert_raise ActiveRecord::RecordNotFound do
         @post.as_version(-1)
@@ -49,6 +62,12 @@ class MergeTest < ActiveSupport::TestCase
     context "reverted back" do
       setup do
         @reverted = @post.as_version(1)
+        assert_equal "Sugar", @reverted.topic
+      end
+      
+      should "allow additional reverts" do
+        @grandpa = @reverted.as_version(0)
+        assert_equal "Sweet", @grandpa.topic
       end
       
       should "not allow saves" do
