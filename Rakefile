@@ -2,6 +2,24 @@ require 'rake'
 require 'rake/testtask'
 require 'rake/rdoctask'
 
+begin
+  require 'jeweler'
+  Jeweler::Tasks.new do |gem|
+    gem.name = "historical"
+    gem.summary = %q{Yet another versioning plugin for Rails' ActiveRecord}
+    gem.description = %q{Yet another versioning plugin for Rails' ActiveRecord}
+    gem.email = "marcel@northdocks.com"
+    gem.homepage = "http://github.com/sirlantis/historical"
+    gem.authors = ["Marcel Jackwerth"]
+  end
+  Jeweler::GemcutterTasks.new
+rescue LoadError
+  puts "Jeweler not available. Install it with: sudo gem install technicalpickles-jeweler -s http://gems.github.com"
+end
+
+# check dependencies
+task :test => :check_dependencies
+
 desc 'Default: run unit tests.'
 task :default => :test
 
