@@ -1,7 +1,7 @@
 class Version < ActiveRecord::Base
   set_table_name :versions
 
-  named_scope :most_recent, :order => "created_at DESC"
+  named_scope :most_recent, :order => "version DESC", :limit => 1
   
   validates_presence_of :target
   validates_presence_of :version
