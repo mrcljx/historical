@@ -105,17 +105,17 @@ module Historical
   module InstanceMethods
     def as_version(version_number)
       version_number = version_number.to_i
-      raise ActiveRecord::RecordNotFound, "version number is negative" if version_number < 0
+      version_number = version + version_number if version_number < 0
+      raise ActiveRecord::RecordNotFound, "version would be before creation (version: #{version_number})" if version_number <= 0
       
       fake = self.class.find(id)
-      latest_version = fake.model_updates.most_recent.first.version
       
-      raise ActiveRecord::RecordNotFound, "version number is in the future" if version_number > latest_version
       return fake if latest_version == version_number
+      raise ActiveRecord::RecordNotFound, "version would be in the future (version: #{version_number}, latest: #{latest_version})" if version_number > latest_version
       
       self.class.columns.each do |col|
         # no need to join manually, because it's a has_many :through relation
-        change = attribute_updates.first(:conditions => ["model_updates.version > ? AND attribute_updates.attribute = ?", version_number, col.name],
+        change = attribute_updates.first(:conditions => ["model_updates.version >= ? AND attribute_updates.attribute = ?", version_number, col.name],
                                         :order => "model_updates.version ASC")
         fake[col.name] = change.old if change
       end
@@ -127,18 +127,22 @@ module Historical
       fake
     end
 
-    def reverted?; @reverted; end
+    def reverted?; !!@reverted; end
     
-    def latest_version
+    def latest_version(reload = false)
       if new_record?
         0
       else
-        model_updates.maximum(:version) || 0
+        (model_updates(reload).maximum(:version) || 0) + 1
       end
     end
     
     def version
-      reverted? ? @version : latest_version
+      if reverted?
+        @version
+      else
+        latest_version
+      end
     end
   end
 end

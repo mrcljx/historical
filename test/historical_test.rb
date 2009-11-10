@@ -23,7 +23,7 @@ class HistoricalTest < ActiveSupport::TestCase
     historical :except => :password, :timestamps => true
   end
   
-  context "An account instance" do
+  context "An Account instance" do
     setup do
       @account = Account.create!(:login => "jane", :password => "doe")
     end
@@ -49,6 +49,8 @@ class HistoricalTest < ActiveSupport::TestCase
         @post.save!
         @post.reload
         assert_equal 0, @post.updates.count
+        assert_equal false, @post.reverted?
+        assert_equal 1, @post.version
       end
     end
     
@@ -62,6 +64,8 @@ class HistoricalTest < ActiveSupport::TestCase
         @post.reload
         
         assert_equal 1, @post.updates.count
+        assert_equal 1, @post.updates.first.version
+        
         assert_equal 1, @post.attribute_updates.count
         
         change = @post.attribute_updates.first

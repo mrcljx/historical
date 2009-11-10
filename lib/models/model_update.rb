@@ -18,7 +18,7 @@ class ModelUpdate < ActiveRecord::Base
   # Sets the +version+ number (simply the next available number determined via SQL).
   before_validation_on_create do |model|
     if model.target
-      model.version = model.target.latest_version + 1
+      model.version = model.target.latest_version
     end
   end
   
