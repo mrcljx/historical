@@ -2,7 +2,7 @@ Description:
     Explain the generator
 
 Example:
-    ./script/generate historical Thing
+    ./script/generate historical
 
     This will create:
         what/will/it/create
