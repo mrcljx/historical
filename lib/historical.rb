@@ -41,6 +41,9 @@ module Historical
     # * <tt>timestamps</tt> - whether or not to include created_at and updated_at for versioning (default: false)
     # * <tt>merge</tt> - options for update-merging to avoid clutter (default: false)
     def historical(options = {})
+      raise "historical was already called" if @historical_enabled
+      @historical_enabled = true
+      
       options = {:timestamps => false, :only => false, :except => false}.merge(options)
       validate_historical_options(options)
       validate_historical_merge_options(options[:merge])
@@ -116,13 +119,27 @@ module Historical
                                         :order => "model_updates.version ASC")
         fake[col.name] = change.old if change
       end
-      fake.reverted!
+      
+      fake.instance_variable_set :@version, version_number
+      fake.instance_variable_set :@reverted, true
+      
       fake.readonly!
       fake
     end
-    
-    def reverted!; @reverted = true; end
+
     def reverted?; @reverted; end
+    
+    def latest_version
+      if new_record?
+        0
+      else
+        model_updates.maximum(:version) || 0
+      end
+    end
+    
+    def version
+      reverted? ? @version : latest_version
+    end
   end
 end
 
