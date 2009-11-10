@@ -20,7 +20,7 @@ with migrations without ending up at a point where your old versions become obso
 * Stores everything in a single database table.
 * TODO: current_user (auditing)
 
-## Why another versioning plugin?
+## Why Another Versioning Plugin?
 
 You might have seen a lot of plugins that allow you to version your models' data, like
 `acts_as_versioned`, `paper_trail`, or `vestal_versions`. While `acts_as_versioned`
@@ -28,11 +28,10 @@ has clear semantics and a good database design, it also generates much overhead.
 other plugins try to tackle this by "only storing the changes in a single table".
 
 The issue I had with the other approaches was that you store complex data-types
-in a RDBMS. You can call me picky but I think this would be a job for *CouchDB*. 
+in a RDBMS. You can call me picky but I think this would be a job
+for *CouchDB*. **What if I have a migration which renames column A to B?**
 
-* What if I have a migration which renames column A to B?
-
-*Historical* is my approach to build something between`acts_as_versioned` and `paper_trail`.
+*Historical* is my approach to build something between `acts_as_versioned` and `paper_trail`.
 
 ## Rails Version
 
@@ -44,44 +43,78 @@ Setting up *Historical* only needs a single line of code in each model you want 
 
     class Post < ActiveRecord::Base
       historical
+      
       belongs_to :author, :class_name => "Person"
+      
+      # ...
     end
     
-You can retrieve the history through the `versions` association.
+### Getting Versions and Attribute Changes
 
     post = Post.find 1
-    post.versions             #=> [<Version>, <Version>, ...]
-
-Each version has many `AttributeUpdate`s linked to it. You can get them via `version.attribute_updates`. These
-will then have a `old` and a `new` value.
-
-You can get a previous state of a model by using `as_version(version_number)`. The version number is stored in
-`version.version`. Using `version_number = 0` will return the initial state of the model (after it was created /
-before you added `historical` to the model).
-
-    post = Post.find 1
-    old_post = post.as_version(3)
+    post.author                         # => <Person name="Jane">
+    post.versions                       # => [<Version>, <Version>, ...]
     
-The states returned by `as_version` will be `readonly!`.
+    version = post.versions.first
+    version.version                     # => 1
+    version.attribute_changes           # => [<AttributeChange>, ...]
+    
+    change = version.attribute_changes.first
+    change.attribute                    # => "topic"
+    change.old                          # => "Hi"
+    change.new                          # => "Hello"
+
+### Reverting to Older Versions
+
+    old_post = post.as_version(1)       # returns a Post instance with working (outgoing) associations
+    old_post.topic                      # => "Hello"
+    old_post.author                     # => <Person name="John">
+    old_post.save!                      # will raise an ActiveRecord::ReadOnlyRecord exception
+    
+    oldest_post = post.as_version(0)    # before you added historical / after post was created
+    oldest_post.topic                   # => "Hi"
+    
 
 ## Configure `historical`
 
-* `:only => [:topic]` will only track the specified attributes.
-* `:except => [:password]` let's you restrict which attributes should be tracked.
-* `:timestamps => true` will make Historical to track `created_at` and `updated_at` (which are ignored by default).
+    historical :only => [:topic]             # will only track the specified attributes
+    historical :except => [:password]        # let's you restrict which attributes should be tracked
+    historical :timestamps => true`          # will also track `created_at` and `updated_at` (ignored by default)
 
-## Auto-Merging of Versions
+### Auto-Merging of Versions
 
-In some cases you might want to automatically merge versions just to avoid unnecessary noise.
+Here is a simple szenario where auto-merging might be useful.
 
-* User A creates a Post with `Hi` as the topic.
-* User B changes the topic to `Hellow`
-* User B fixes the typo and changes the topic to `Hello` (only one minute later).
+    post = Post.create!(:topic => "Hi")         # User A creates Post
+    post.update_attributes!(:topic => "Heloo")  # User B edits topic
+    post.update_attributes!(:topic => "Hello")  # User B fixes typo in topic ten seconds later
 
-You can enable this behavior by calling `historical`with
+    post.versions.count                         # => 2
 
-* `:merge => {...}` Allows you to enable auto-merging of versions.
-  * `:if_time_difference_is_less_than => 3.seconds`
+Why not only have one version because this fix was added so quick after the last version? Just
+update your Post model with this:
+
+    historical :merge => { :if_time_difference_is_less_than => 2.minutes }
+  
+Now let's take a look again.
+    
+    post = Post.create!(:topic => "Hi")         # User A creates Post
+    post.update_attributes!(:topic => "Heloo")  # User B edits topic
+    post.update_attributes!(:topic => "Hello")  # User B fixes typo in topic ten seconds later
+
+    post.versions.count                         # => 1
+    version = post.versions.first
+    change  = version.attribute_changes.first
+    
+    change.attribute                            # => "topic"
+    change.old                                  # => "Hi"
+    change.new                                  # => "Hello"
+    
+    # and even more
+    
+    post.update_attributes!(:topic => "Hi")     # User B restores topic manually
+    post.versions.count                         # => 0
+
 
 ## Intellectual Property
 
