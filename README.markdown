@@ -138,6 +138,13 @@ Now let's take a look again.
     post.update_attributes!(:topic => "Hi")     # User B restores topic manually
     post.model_updates.count                    # => 0
 
+## How to Migrate?
+
+Should you consider doing a migration on your versioned model tabel, you might need to update the `attribute_updates` table as well.
+
+    rename_column :posts, :topic, :title
+    execute "UPDATE attribute_updates upd SET upd.attribute = 'title' WHERE upd.target_type = 'Post' AND upd.attribute = 'topic'"
+    
 
 ## Intellectual Property
 
