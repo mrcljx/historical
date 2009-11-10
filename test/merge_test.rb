@@ -5,7 +5,7 @@ class MergeTest < ActiveSupport::TestCase
   
   context "A non-mergeable Post instance" do
     setup do
-      @post = Post.create!(:topic => "hello world", :content => "dlrow olleh")
+      @post = HistoricalTestModels::Post.create!(:topic => "hello world", :content => "dlrow olleh")
     end
     
     should "not merge changes" do
@@ -22,7 +22,7 @@ class MergeTest < ActiveSupport::TestCase
   
   context "A mergeable Post instance" do
     setup do
-      @post = MergeablePost.create!(:topic => "hello world", :content => "dlrow olleh")
+      @post = HistoricalTestModels::MergeablePost.create!(:topic => "hello world", :content => "dlrow olleh")
     end
     
     context "which has been changed 3 minutes ago" do

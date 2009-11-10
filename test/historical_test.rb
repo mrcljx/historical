@@ -5,7 +5,7 @@ class HistoricalTest < ActiveSupport::TestCase
   
   context "A person (:only => email) instance" do
     setup do
-      @person = Person.create!(:name => "max", :email => "max@example.com")
+      @person = HistoricalTestModels::Person.create!(:name => "max", :email => "max@example.com")
     end
     
     should "only track email updates" do
@@ -41,7 +41,7 @@ class HistoricalTest < ActiveSupport::TestCase
   
   context "A Post instance" do
     setup do
-      @post = Post.create!(:topic => "hello world", :content => "dlrow olleh")
+      @post = HistoricalTestModels::Post.create!(:topic => "hello world", :content => "dlrow olleh")
     end
     
     context "with no changes" do     

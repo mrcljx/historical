@@ -9,8 +9,16 @@ require 'test/unit'
 require 'shoulda'
 require File.expand_path(File.join(ENV['RAILS_ROOT'], 'config/environment.rb'))
 
-require 'models/person'
-require 'models/post'
+module Historical
+  module Test
+    module Models
+      #
+    end
+  end
+end
+
+require File.join(File.dirname(__FILE__), 'models/person')
+require File.join(File.dirname(__FILE__), 'models/post')
 
 def load_schema
   config = YAML::load(IO.read(File.dirname(__FILE__) + '/database.yml'))

@@ -5,10 +5,10 @@ class RevertTest < ActiveSupport::TestCase
   
   context "A Post instance with some updates" do
     setup do
-      @john = Person.create!(:name => "john")
-      @jane = Person.create!(:name => "jane")
+      @john = HistoricalTestModels::Person.create!(:name => "john")
+      @jane = HistoricalTestModels::Person.create!(:name => "jane")
       
-      @post = Post.create!(:topic => "Sweet", :content => "Home Sweet Home", :author_id => @john.id)
+      @post = HistoricalTestModels::Post.create!(:topic => "Sweet", :content => "Home Sweet Home", :author_id => @john.id)
       @post.update_attributes!(:topic => "Sugar", :content => "Baby")
       @post.update_attributes!(:topic => "Summer", :content => "I know what you did!") # version = 2
       @post.update_attributes!(:topic => "Amazons", :author_id => @jane.id)
