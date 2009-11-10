@@ -7,6 +7,27 @@ best features of other approaches (auditing, single table) without storing seria
 complex data-types in your relational database. This allows you to continue your work
 with migrations without ending up at a point where your old versions become obsolete.
 
+## A Short Comparison
+
+**Note:** *list taken from [`vestal_versions`](http://github.com/laserlemon/vestal_versions) GitHub page, extended by `historical`*
+
+[`acts_as_versioned`](http://github.com/technoweenie/acts_as_versioned) by [technoweenie](http://github.com/technoweenie) was a great start,
+but it failed to keep up with ActiveRecord's introduction of dirty objects in version 2.1. Additionally, each versioned model needs its own versions
+table that duplicates most of the original table's columns. The versions table is then populated with records that often duplicate most of the original
+record's attributes. All in all, not very DRY.
+
+[`simply_versioned`](http://github.com/mmower/simply_versioned) by [mmower](http://github.com/mmower) started to move in the right direction by
+removing a great deal of the duplication of acts_as_versioned. It requires only one versions table and no changes whatsoever to existing models.
+Its versions table stores all of the model attributes as a YAML hash in a single text column. But we could be DRYer!
+
+[`vestal_versions`](http://github.com/laserlemon/vestal_versions) by [laserlemon](http://github.com/laserlemon) keeps in the spirit of consolidating to one versions table,
+polymorphically associated with its parent models. But it goes one step further by storing a serialized hash of _only_ the models'
+changes. Think modern version control systems. By traversing the record of changes, the models can be reverted to any point in time.
+
+[`historical`](http://github.com/sirlantis/historical) keeps the one versions table approach and will only store differences. However it will not store
+serialized complex data-types (full models) in the database to maintain the comfort of migrations (*What if I have a migration which renames column A to B?
+Will my old versions become useless?*). As a nice side-effect this allows fast reverting to previous states.
+
 ## Features
 
 * Allows you to get **every previous version**.
@@ -19,19 +40,6 @@ with migrations without ending up at a point where your old versions become obso
 * Unobstrusive versioning **without serialization** of complex data-types.
 * Stores everything in a single database table.
 * TODO: current_user (auditing)
-
-## Why Another Versioning Plugin?
-
-You might have seen a lot of plugins that allow you to version your models' data, like
-`acts_as_versioned`, `paper_trail`, or `vestal_versions`. While `acts_as_versioned`
-has clear semantics and a good database design, it also generates much overhead. Most
-other plugins try to tackle this by "only storing the changes in a single table".
-
-The issue I had with the other approaches was that you store complex data-types
-in a RDBMS. You can call me picky but I think this would be a job
-for *CouchDB*. **What if I have a migration which renames column A to B?**
-
-*Historical* is my approach to build something between `acts_as_versioned` and `paper_trail`.
 
 ## Rails Version
 
