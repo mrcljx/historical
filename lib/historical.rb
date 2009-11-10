@@ -102,7 +102,10 @@ module Historical
       raise ActiveRecord::RecordNotFound, "version number is negative" if version_number < 0
       
       fake = self.class.find(id)
-      raise ActiveRecord::RecordNotFound, "version number is in the future" if version_number > fake.versions.most_recent.first.version
+      latest_version = fake.versions.most_recent.first.version
+      
+      raise ActiveRecord::RecordNotFound, "version number is in the future" if version_number > latest_version
+      return fake if latest_version == version_number
       
       self.class.columns.each do |col|
         # no need to join manually, because it's a has_many :through relation
@@ -110,10 +113,13 @@ module Historical
                                         :order => "versions.version ASC")
         fake[col.name] = change.old if change
       end
-      fake.freeze
+      fake.reverted!
       fake.readonly!
       fake
     end
+    
+    def reverted!; @reverted = true; end
+    def reverted?; @reverted; end
   end
 end
 
