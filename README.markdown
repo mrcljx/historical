@@ -69,6 +69,7 @@ Setting up *Historical* only needs a single line of code in each model you want 
 ### Getting Model Updates, Attribute Updates and Versions
 
     post = Post.find 1
+    post.version                        # => 5
     post.author                         # => <Person name="Jane">
     post.model_updates                  # => [<ModelUpdate>, <ModelUpdate>, ...]
     
@@ -81,20 +82,23 @@ Setting up *Historical* only needs a single line of code in each model you want 
     change.old                          # => "Hi"
     change.new                          # => "Hello"
     
-    # shortcut
+    # you might also use a shortcut
     update.old_topic                    # => "Hi"
     update.new_topic                    # => "Hello"
 
 
 ### Reverting to Older Versions
 
-    old_post = post.as_version 1        # returns a Post instance with working (outgoing) associations
+    old_post = post.as_version 2        # returns a Post instance with working (outgoing) associations
     old_post.topic                      # => "Hello"
     old_post.author                     # => <Person name="John">
     old_post.save!                      # will raise an ActiveRecord::ReadOnlyRecord exception
     
-    oldest_post = post.as_version 0     # before you added historical / after post was created
+    oldest_post = post.as_version 1     # before you added historical / after post was created
     oldest_post.topic                   # => "Hi"
+    
+    previous_post = post.as_version -1  # negative numbers allow to step back
+    previous_post.version               # => 4
     
 
 ## Configure `historical`
@@ -112,6 +116,7 @@ Here is a simple szenario where auto-merging might be useful.
     post.update_attributes!(:topic => "Heloo")  # User B edits topic
     post.update_attributes!(:topic => "Hello")  # User B fixes typo in topic ten seconds later
 
+    post.version                                # => 3
     post.model_updates.count                    # => 2
 
 Why not only have one `ModelUpdate` because this fix was added so quick after the last version? Just
@@ -125,6 +130,7 @@ Now let's take a look again.
     post.update_attributes!(:topic => "Heloo")  # User B edits topic
     post.update_attributes!(:topic => "Hello")  # User B fixes typo in topic ten seconds later
 
+    post.version                                # => 2
     post.model_updates.count                    # => 1
     update = post.model_updates.first
     change = update.attribute_updates.first
@@ -136,6 +142,7 @@ Now let's take a look again.
     # and even destruction of updates (only happens on exact reverts)
     
     post.update_attributes!(:topic => "Hi")     # User B restores topic manually
+    post.version                                # => 1
     post.model_updates.count                    # => 0
 
 ## How to Migrate?
