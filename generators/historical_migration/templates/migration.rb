@@ -24,7 +24,6 @@ class HistoricalMigration < ActiveRecord::Migration
       <%= "t.#{w} :new_#{w}, :null => true" %>
       <%= "t.#{w} :old_#{w}, :null => true" %>
 <%- end -%>
-      end
     end
   end
   
