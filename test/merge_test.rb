@@ -34,7 +34,7 @@ class MergeTest < ActiveSupport::TestCase
         @post.reload
       end
       
-      should "not merge changes" do
+      should "not merge versions when changed" do
         @post.topic = "bye world"
         @post.content = "i leave you now"
         @post.save!
@@ -54,7 +54,7 @@ class MergeTest < ActiveSupport::TestCase
         @post.reload
       end
 
-      should "merge changes" do
+      should "merge versions when changed" do
         @post.topic = "bye world"
         @post.content = "i leave you now"
         @post.save!
@@ -77,7 +77,7 @@ class MergeTest < ActiveSupport::TestCase
         assert_equal "i leave you now", content_change.new
       end
       
-      should "not eliminate versions with partial reverts" do
+      should "not eliminate versions on inexact reverts (remaining attribute changes)" do
         @post.topic = "hello world"
         @post.content = "something else"
         @post.save!
@@ -86,7 +86,7 @@ class MergeTest < ActiveSupport::TestCase
         assert_equal 1, @post.attribute_changes.count
       end
       
-      should "eliminate versions with exact reverts" do
+      should "eliminate versions on exact reverts" do
         @post.topic = "hello world"
         @post.save!
         @post.reload
