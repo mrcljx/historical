@@ -39,7 +39,7 @@ Developed with/for Rails 2.3.4
 
 ## Basic Usage
 
-Setting up *Historical* only needs a single line of code in each model you want to have versions for.
+Setting up *Historical* only needs a single line of code in each model you want to have updates/versions for.
 
     class Post < ActiveRecord::Base
       historical
@@ -49,29 +49,34 @@ Setting up *Historical* only needs a single line of code in each model you want 
       # ...
     end
     
-### Getting Versions and Attribute Changes
+### Getting Model Updates, Attribute Updates and Versions
 
     post = Post.find 1
     post.author                         # => <Person name="Jane">
-    post.versions                       # => [<Version>, <Version>, ...]
+    post.model_updates                  # => [<ModelUpdate>, <ModelUpdate>, ...]
     
-    version = post.versions.first
-    version.version                     # => 1
-    version.attribute_changes           # => [<AttributeChange>, ...]
+    update = post.model_updates.first
+    update.version                      # => 1
+    update.attribute_updates            # => [<AttributeUpdate>, ...]
     
-    change = version.attribute_changes.first
+    change = update.attribute_updates.first
     change.attribute                    # => "topic"
     change.old                          # => "Hi"
     change.new                          # => "Hello"
+    
+    # shortcut
+    update.old_topic                    # => "Hi"
+    update.new_topic                    # => "Hello"
+
 
 ### Reverting to Older Versions
 
-    old_post = post.as_version(1)       # returns a Post instance with working (outgoing) associations
+    old_post = post.as_version 1        # returns a Post instance with working (outgoing) associations
     old_post.topic                      # => "Hello"
     old_post.author                     # => <Person name="John">
     old_post.save!                      # will raise an ActiveRecord::ReadOnlyRecord exception
     
-    oldest_post = post.as_version(0)    # before you added historical / after post was created
+    oldest_post = post.as_version 0     # before you added historical / after post was created
     oldest_post.topic                   # => "Hi"
     
 
@@ -81,7 +86,8 @@ Setting up *Historical* only needs a single line of code in each model you want 
     historical :except => [:password]        # let's you restrict which attributes should be tracked
     historical :timestamps => true`          # will also track `created_at` and `updated_at` (ignored by default)
 
-### Auto-Merging of Versions
+
+### Auto-Merging of Updates
 
 Here is a simple szenario where auto-merging might be useful.
 
@@ -89,9 +95,9 @@ Here is a simple szenario where auto-merging might be useful.
     post.update_attributes!(:topic => "Heloo")  # User B edits topic
     post.update_attributes!(:topic => "Hello")  # User B fixes typo in topic ten seconds later
 
-    post.versions.count                         # => 2
+    post.model_updates.count                    # => 2
 
-Why not only have one version because this fix was added so quick after the last version? Just
+Why not only have one `ModelUpdate` because this fix was added so quick after the last version? Just
 update your Post model with this:
 
     historical :merge => { :if_time_difference_is_less_than => 2.minutes }
@@ -102,18 +108,18 @@ Now let's take a look again.
     post.update_attributes!(:topic => "Heloo")  # User B edits topic
     post.update_attributes!(:topic => "Hello")  # User B fixes typo in topic ten seconds later
 
-    post.versions.count                         # => 1
-    version = post.versions.first
-    change  = version.attribute_changes.first
+    post.model_updates.count                    # => 1
+    update = post.model_updates.first
+    change = update.attribute_updates.first
     
     change.attribute                            # => "topic"
     change.old                                  # => "Hi"
     change.new                                  # => "Hello"
     
-    # and even more
+    # and even destruction of updates (only happens on exact reverts)
     
     post.update_attributes!(:topic => "Hi")     # User B restores topic manually
-    post.versions.count                         # => 0
+    post.model_updates.count                    # => 0
 
 
 ## Intellectual Property
