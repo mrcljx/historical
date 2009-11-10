@@ -1,5 +1,5 @@
-require 'models/version'
-require 'models/attribute_change'
+require 'models/model_update'
+require 'models/attribute_update'
 
 module Historical
   VALID_HISTORICAL_OPTIONS = [:timestamps, :except, :only, :merge]
@@ -12,10 +12,10 @@ module Historical
 
   module ClassMethods
     # Decides wether the +model+ with the specified changes can be merged. This
-    # is based on whether there exists a version which the new changes could
+    # is based on whether there exists a +Update+ which the new changes could
     # be merged with and whether the time threshold allows merging.
     def can_merge?(model, changes)
-      last = model.versions.most_recent.first
+      last = model.model_updates.most_recent.first
       return false unless last
       
       if self.historical_merge_options[:if_time_difference_is_less_than]
@@ -39,7 +39,7 @@ module Historical
     # * <tt>except</tt> - excludes the specified colums from versioning
     # * <tt>only</tt> - only includes the specified columns for versioning
     # * <tt>timestamps</tt> - whether or not to include created_at and updated_at for versioning (default: false)
-    # * <tt>merge</tt> - options for version-merging to avoid clutter (default: false)
+    # * <tt>merge</tt> - options for update-merging to avoid clutter (default: false)
     def historical(options = {})
       options = {:timestamps => false, :only => false, :except => false}.merge(options)
       validate_historical_options(options)
@@ -50,8 +50,10 @@ module Historical
       cattr_accessor :historical_merge_options
       self.historical_merge_options = options[:merge]
       
-      has_many :versions, :as => :target, :dependent => :destroy
-      has_many :attribute_changes, :through => :versions
+      has_many :model_updates, :as => :target, :dependent => :destroy
+      has_many :attribute_updates, :through => :model_updates
+      
+      alias_method :updates, :model_updates
       
       only = options[:only]
       only = Array.wrap(only).collect{ |x| x.to_s } if only
@@ -78,14 +80,14 @@ module Historical
         
         next if changes.empty?
         
-        Version.transaction do
+        ModelUpdate.transaction do
           if self.historical_merge_options and can_merge?(model, changes)
-            model.versions.most_recent.first.merge!(changes)
+            model.model_updates.most_recent.first.merge!(changes)
           else
-            version = model.versions.create!
+            model_update = model.model_updates.create!
             changes.collect do |attribute, diff|
-              version.attribute_changes.create! do |change|
-                change.version = version
+              model_update.attribute_updates.create! do |change|
+                change.model_update = model_update
                 change.attribute = attribute.to_s
                 change.attribute_type = model.column_for_attribute(attribute.to_s).type.to_s
                 change.update_by_diff(diff)
@@ -103,15 +105,15 @@ module Historical
       raise ActiveRecord::RecordNotFound, "version number is negative" if version_number < 0
       
       fake = self.class.find(id)
-      latest_version = fake.versions.most_recent.first.version
+      latest_version = fake.model_updates.most_recent.first.version
       
       raise ActiveRecord::RecordNotFound, "version number is in the future" if version_number > latest_version
       return fake if latest_version == version_number
       
       self.class.columns.each do |col|
         # no need to join manually, because it's a has_many :through relation
-        change = attribute_changes.first(:conditions => ["versions.version > ? AND attribute_changes.attribute = ?", version_number, col.name],
-                                        :order => "versions.version ASC")
+        change = attribute_updates.first(:conditions => ["model_updates.version > ? AND attribute_updates.attribute = ?", version_number, col.name],
+                                        :order => "model_updates.version ASC")
         fake[col.name] = change.old if change
       end
       fake.reverted!

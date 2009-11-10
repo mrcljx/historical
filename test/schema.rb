@@ -16,7 +16,7 @@ ActiveRecord::Schema.define(:version => 0) do
     t.string :password
     t.timestamps
   end
-  create_table :versions, :force => true do |t|
+  create_table :model_updates, :force => true do |t|
     t.integer :target_id
     t.string :target_type
     t.integer :author_id
@@ -25,8 +25,8 @@ ActiveRecord::Schema.define(:version => 0) do
     t.text :cause
     t.timestamps
   end
-  create_table :attribute_changes, :force => true do |t|
-    t.integer :version_id
+  create_table :attribute_updates, :force => true do |t|
+    t.integer :model_update_id
     t.string :attribute
     t.string :attribute_type
     %w( string text integer float decimal datetime timestamp time date binary boolean ).each do |w|

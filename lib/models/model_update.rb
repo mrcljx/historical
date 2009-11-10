@@ -1,5 +1,5 @@
-class Version < ActiveRecord::Base
-  set_table_name :versions
+class ModelUpdate < ActiveRecord::Base
+  set_table_name :model_updates
 
   named_scope :most_recent, :order => "version DESC", :limit => 1
   
@@ -11,29 +11,32 @@ class Version < ActiveRecord::Base
   belongs_to :target, :polymorphic => true
   belongs_to :author, :polymorphic => true
   
-  has_many :attribute_changes, :dependent => :destroy
+  has_many :attribute_updates, :dependent => :destroy
+  
+  alias attr_updates attribute_updates
   
   # Sets the +version+ number (simply the next available number determined via SQL).
   before_validation_on_create do |model|
     if model.target
-      model.version = model.target.new_record? ? 1 : (model.target.versions.maximum(:version) || 0) + 1
+      model.version = model.target.new_record? ? 1 : (model.target.model_updates.maximum(:version) || 0) + 1
     end
   end
   
   # Will apply a set of +changes+ (retrieved via Rails' dirty changes) and
   # delete +AttributeChanges+ where necessary. If all changes are destroyed
-  # by this the +Version+ will destroy itself.
+  # by this the +Update+ will destroy itself.
   def merge!(changes)
     raise "cannot merge! a new_record" if new_record?
     
-    Version.transaction do
+    ModelUpdate.transaction do
       changes.each do |attribute, diff|
-        change = attribute_changes.find_or_initialize_by_attribute(attribute.to_s) do |a|
+        change = attribute_updates.find_or_initialize_by_attribute(attribute.to_s) do |a|
           a.attribute_type = target.column_for_attribute(attribute.to_s).type.to_s
         end
-        change.update_by_diff(diff) ? change.save! : change.destroy
+        equal_attributes = change.update_by_diff(diff)
+        equal_attributes ? change.save! : change.destroy
       end
-      self.destroy if attribute_changes(:reload).empty?
+      self.destroy if attribute_updates(:reload).empty?
     end
   end
   
@@ -44,7 +47,7 @@ class Version < ActiveRecord::Base
       
       # try to find a column
       if column = target.column_for_attribute(name)
-        change = attribute_changes.find_by_attribute(column.name)
+        change = attribute_updates.find_by_attribute(column.name)
         raise "#{name} didn't change" unless change
         change.send action
       

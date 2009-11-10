@@ -14,8 +14,8 @@ class HistoricalTest < ActiveSupport::TestCase
       @person.save!
       @person.reload
       
-      assert_equal 1, @person.versions.count
-      assert_equal ["email"], @person.attribute_changes.collect { |x| x.attribute }
+      assert_equal 1, @person.updates.count
+      assert_equal ["email"], @person.attribute_updates.collect { |x| x.attribute }
     end
   end
   
@@ -34,8 +34,8 @@ class HistoricalTest < ActiveSupport::TestCase
       @account.save!
       @account.reload
       
-      assert_equal 1, @account.versions.count
-      assert_equal ["login", "updated_at"].to_set, @account.attribute_changes.collect{ |x| x.attribute }.to_set
+      assert_equal 1, @account.updates.count
+      assert_equal ["login", "updated_at"].to_set, @account.attribute_updates.collect{ |x| x.attribute }.to_set
     end
   end
   
@@ -48,7 +48,7 @@ class HistoricalTest < ActiveSupport::TestCase
       should "not spawn a new version when saved" do
         @post.save!
         @post.reload
-        assert_equal 0, @post.versions.count
+        assert_equal 0, @post.updates.count
       end
     end
     
@@ -61,10 +61,10 @@ class HistoricalTest < ActiveSupport::TestCase
         @post.save!
         @post.reload
         
-        assert_equal 1, @post.versions.count
-        assert_equal 1, @post.attribute_changes.count
+        assert_equal 1, @post.updates.count
+        assert_equal 1, @post.attribute_updates.count
         
-        change = @post.attribute_changes.first
+        change = @post.attribute_updates.first
         
         assert_equal "topic", change.attribute
         assert_equal "hello world", change.old

@@ -3,7 +3,7 @@ require 'test_helper'
 class RevertTest < ActiveSupport::TestCase
   load_schema
   
-  context "A Post instance with some versions" do
+  context "A Post instance with some updates" do
     setup do
       @john = Person.create!(:name => "john")
       @jane = Person.create!(:name => "jane")
@@ -18,8 +18,8 @@ class RevertTest < ActiveSupport::TestCase
       
       assert !@post.reverted?
       assert_equal @jane, @post.author
-      assert_equal 5, @post.versions(:reload).count
-      assert_equal [1,2,3,4,5].to_set, @post.versions.collect{ |v| v.version }.to_set
+      assert_equal 5, @post.model_updates(:reload).count
+      assert_equal [1,2,3,4,5].to_set, @post.model_updates.collect{ |v| v.version }.to_set
     end
     
     should "be able to time-travel" do
@@ -56,7 +56,7 @@ class RevertTest < ActiveSupport::TestCase
     
     should "allow time-travel to self" do
       assert_nothing_raised do
-        @old = @post.as_version(@post.versions.most_recent.first.version)
+        @old = @post.as_version(@post.model_updates.most_recent.first.version)
       end
       
       assert_equal @post.topic, @old.topic
@@ -68,7 +68,7 @@ class RevertTest < ActiveSupport::TestCase
     
     should "not allow time-travel to the future" do
       assert_raise ActiveRecord::RecordNotFound do
-        @post.as_version(@post.versions.most_recent.first.version + 1)
+        @post.as_version(@post.model_updates.most_recent.first.version + 1)
       end
     end
     
@@ -79,7 +79,7 @@ class RevertTest < ActiveSupport::TestCase
     end
     
     should "get changes on version" do
-      @version = @post.versions.find_by_version(5)
+      @version = @post.updates.find_by_version(5)
       assert_equal @jane, @version.new_author
       assert_equal @john, @version.old_author
     end
