@@ -6,8 +6,8 @@ begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
     gem.name = "historical"
-    gem.summary = %q{Yet another versioning plugin for Rails' ActiveRecord}
-    gem.description = %q{Yet another versioning plugin for Rails' ActiveRecord}
+    gem.summary = %q{DRY and serialization-free versioning for ActiveRecord models}
+    gem.description = %q{DRY and serialization-free versioning for ActiveRecord models}
     gem.email = "marcel@northdocks.com"
     gem.homepage = "http://github.com/sirlantis/historical"
     gem.authors = ["Marcel Jackwerth"]
