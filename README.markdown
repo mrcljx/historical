@@ -45,6 +45,15 @@ Will my old versions become useless?*). As a nice side-effect this allows fast r
 
 Developed with/for Rails 2.3.4
 
+## Installation
+
+    cd YOUR_RAILS_APP
+    
+    ruby script/plugin install git://github.com/sirlantis/historical.git
+    ruby script/generate historical_migration
+    
+    rake db:migrate
+
 ## Basic Usage
 
 Setting up *Historical* only needs a single line of code in each model you want to have updates/versions for.
