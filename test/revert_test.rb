@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class MergeTest < ActiveSupport::TestCase
+class RevertTest < ActiveSupport::TestCase
   load_schema
   
   context "A Post instance with some versions" do
