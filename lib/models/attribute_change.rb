@@ -2,6 +2,8 @@ class AttributeChange < ActiveRecord::Base
   set_table_name :attribute_changes
   
   validates_presence_of :version
+  validates_presence_of :attribute_type
+  validates_inclusion_of :attribute_type, :in => %w( string text integer float decimal datetime timestamp time date binary boolean )
   validates_uniqueness_of :attribute, :scope => :version_id
   
   belongs_to :version
@@ -12,22 +14,24 @@ class AttributeChange < ActiveRecord::Base
   # Returns false if +old+ equals +new+. This is used as in indicator for
   # +version.merge!+ that this +AttributeChange+ should be destroyed.
   def update_by_diff(diff)
-    if new_record?
-      self.old_value = diff[0]
-      self.old_class = diff[0].class.name
-    end
-    
-    self.new_value = diff[1]
-    self.new_class = diff[1].class.name
-    
+    self.old = diff[0] if new_record?
+    self.new = diff[1]
     old != new
   end
   
+  def old=(old_value)
+    self.send "old_#{attribute_type}=", old_value
+  end
+  
+  def new=(new_value)
+    self.send "new_#{attribute_type}=", new_value
+  end
+  
   def old # :nodoc:
-    old_value	   
+    self.send "old_#{attribute_type}"
   end
   
   def new # :nodoc:
-    new_value	   
+    self.send "new_#{attribute_type}"
   end
 end

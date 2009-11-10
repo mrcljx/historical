@@ -67,12 +67,8 @@ class HistoricalTest < ActiveSupport::TestCase
         change = @post.attribute_changes.first
         
         assert_equal "topic", change.attribute
-        
-        assert_equal "hello world", change.old_value
-        assert_equal String, change.old_class.constantize
-        
-        assert_equal "hello world again", change.new_value
-        assert_equal String, change.new_class.constantize
+        assert_equal "hello world", change.old
+        assert_equal "hello world again", change.new
       end
     end
   end

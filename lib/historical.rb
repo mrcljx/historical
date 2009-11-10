@@ -87,6 +87,7 @@ module Historical
               version.attribute_changes.create! do |change|
                 change.version = version
                 change.attribute = attribute.to_s
+                change.attribute_type = model.column_for_attribute(attribute.to_s).type.to_s
                 change.update_by_diff(diff)
               end
             end

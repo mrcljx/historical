@@ -28,7 +28,9 @@ class Version < ActiveRecord::Base
     
     Version.transaction do
       changes.each do |attribute, diff|
-        change = attribute_changes.find_or_initialize_by_attribute(attribute.to_s)
+        change = attribute_changes.find_or_initialize_by_attribute(attribute.to_s) do |a|
+          a.attribute_type = target.column_for_attribute(attribute.to_s).type.to_s
+        end
         change.update_by_diff(diff) ? change.save! : change.destroy
       end
       self.destroy if attribute_changes(:reload).empty?

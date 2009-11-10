@@ -28,9 +28,10 @@ ActiveRecord::Schema.define(:version => 0) do
   create_table :attribute_changes, :force => true do |t|
     t.integer :version_id
     t.string :attribute
-    t.string :old_class
-    t.text :old_value
-    t.string :new_class
-    t.text :new_value
+    t.string :attribute_type
+    %w( string text integer float decimal datetime timestamp time date binary boolean ).each do |w|
+      t.send w, "new_#{w}", :null => true
+      t.send w, "old_#{w}", :null => true
+    end
   end
 end
