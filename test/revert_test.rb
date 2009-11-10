@@ -78,6 +78,12 @@ class RevertTest < ActiveSupport::TestCase
       end
     end
     
+    should "get changes on version" do
+      @version = @post.versions.find_by_version(5)
+      assert_equal @jane, @version.new_author
+      assert_equal @john, @version.old_author
+    end
+    
     context "reverted back" do
       setup do
         @reverted = @post.as_version(1)

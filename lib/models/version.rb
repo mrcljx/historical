@@ -36,4 +36,32 @@ class Version < ActiveRecord::Base
       self.destroy if attribute_changes(:reload).empty?
     end
   end
+  
+  def method_missing_with_changes(method, *args)
+    method_name = method.to_s
+    if method_name =~ /^(old|new)_([[:alnum:]_]+)$/
+      action, name = $1, $2
+      
+      # try to find a column
+      if column = target.column_for_attribute(name)
+        change = attribute_changes.find_by_attribute(column.name)
+        raise "#{name} didn't change" unless change
+        change.send action
+      
+      # find ActiveRecord::Reflection::MacroReflection
+      elsif assoc = target.class.reflect_on_association(name.to_sym)
+        raise "only supports belongs_to" unless assoc.belongs_to?
+        raise "polymophic not supported yet" if assoc.options[:polymorphic]
+        assoc.klass.find(self.send("#{action}_#{assoc.primary_key_name}"))
+        
+      # failed
+      else
+        method_missing_without_changes(method, *args)  
+      end
+    else
+      method_missing_without_changes(method, *args)
+    end
+  end
+  
+  alias_method_chain :method_missing, :changes
 end
