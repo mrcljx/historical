@@ -25,7 +25,7 @@ class ModelUpdate < ActiveRecord::Base
   # Will apply a set of +changes+ (retrieved via Rails' dirty changes) and
   # delete +AttributeChanges+ where necessary. If all changes are destroyed
   # by this the +Update+ will destroy itself.
-  def merge!(changes)
+  def merge!(changes, author = nil)
     raise "cannot merge! a new_record" if new_record?
     
     ModelUpdate.transaction do
@@ -36,7 +36,13 @@ class ModelUpdate < ActiveRecord::Base
         equal_attributes = change.update_by_diff(diff)
         equal_attributes ? change.save! : change.destroy
       end
-      self.destroy if attribute_updates(:reload).empty?
+      
+      if attribute_updates(:reload).empty?
+        destroy 
+      elsif author and self.author != author
+        self.author = author
+        save!
+      end
     end
   end
   
