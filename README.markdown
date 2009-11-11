@@ -211,7 +211,9 @@ and store a new version.
 
 **Note:** `is_paranoid` was discontinued by **semanticart** in October 2009. I recommend to
 [read about the whys](http://blog.semanticart.com/killing_is_paranoid/). These are also the reasons
-why such feature isn't implemented in Historical by itself.
+why such feature isn't implemented in Historical by itself. You might want to use the
+[less hacky `is_paranoid`](http://github.com/mislav/is_paranoid) by [mislav](http://github.com/mislav),
+who developed `will_paginate`.
 
 ## Intellectual Property
 
