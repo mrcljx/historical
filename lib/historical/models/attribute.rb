@@ -1,12 +1,14 @@
 class AttributeUpdate < ActiveRecord::Base
   set_table_name :attribute_updates
   
-  validates_presence_of :model_update
+  default_scope :order => "attribute_updates.parent_id ASC, attribute_updates.attribute ASC"
+  
+  validates_presence_of :parent
   validates_presence_of :attribute_type
   validates_inclusion_of :attribute_type, :in => %w( string text integer float decimal datetime timestamp time date binary boolean )
-  validates_uniqueness_of :attribute, :scope => :model_update_id
+  validates_uniqueness_of :attribute, :scope => :parent_id
   
-  belongs_to :model_update
+  belongs_to :parent, :class_name => "ModelUpdate"
   
   # Populates/updates the +AttributeChange+ model. Will only update the
   # +new+ field if the model was already persisted.

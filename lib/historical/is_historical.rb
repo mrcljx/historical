@@ -12,7 +12,7 @@ module Historical::IsHistorical
     # is based on whether there exists a +Update+ which the new changes could
     # be merged with and whether the time threshold allows merging.
     def can_merge?(model, changes, author = nil)
-      last = model.model_updates.most_recent.first
+      last = model.updates.last
       return false unless last
       
       if self.historical_merge_options[:if_time_difference_is_less_than]
@@ -52,10 +52,11 @@ module Historical::IsHistorical
       cattr_accessor :historical_merge_options
       self.historical_merge_options = options[:merge]
       
-      has_many :model_updates, :as => :target, :dependent => :destroy
-      has_many :attribute_updates, :through => :model_updates
+      has_many :saves, :class_name => "ModelSave", :as => :target, :dependent => :destroy
+      has_many :updates, :class_name => "ModelUpdate", :as => :target
+      has_one :creation, :class_name => "ModelCreation", :as => :target
       
-      alias_method :updates, :model_updates
+      has_many :attribute_updates, :through => :updates
       
       only = options[:only]
       only = Array.wrap(only).collect{ |x| x.to_s } if only
@@ -64,6 +65,12 @@ module Historical::IsHistorical
       except = Array.wrap(except).collect{ |x| x.to_s } if except
       
       raise "You can't use :only and :except at the same time" if only and except
+      
+      after_create do |model|
+        ModelUpdate.transaction do
+          model.saves << ModelCreation.create!(:author => model.historical_author, :target => model)
+        end
+      end
       
       after_update do |model|
         next unless model.changed? and model.changes
@@ -86,12 +93,12 @@ module Historical::IsHistorical
         
         ModelUpdate.transaction do
           if self.historical_merge_options and can_merge?(model, changes, author)
-            model.model_updates.most_recent.first.merge!(changes, author)
+            model.updates.last.merge!(changes, author)
           else
-            model_update = model.model_updates.create!(:author => author)
+            update = model.updates.create!(:author => author)
             changes.collect do |attribute, diff|
-              model_update.attribute_updates.create! do |change|
-                change.model_update = model_update
+              update.attribute_updates.create! do |change|
+                change.parent = update
                 change.attribute = attribute.to_s
                 change.attribute_type = model.column_for_attribute(attribute.to_s).type.to_s
                 change.update_by_diff(diff)
@@ -116,8 +123,8 @@ module Historical::IsHistorical
       
       self.class.columns.each do |col|
         # no need to join manually, because it's a has_many :through relation
-        change = attribute_updates.first(:conditions => ["model_updates.version >= ? AND attribute_updates.attribute = ?", version_number, col.name],
-                                        :order => "model_updates.version ASC")
+        change = attribute_updates.first(:conditions => ["model_saves.version >= ? AND attribute_updates.attribute = ?", version_number, col.name],
+                                        :order => "model_saves.version ASC")
         fake[col.name] = change.old if change
       end
       
@@ -127,6 +134,10 @@ module Historical::IsHistorical
       fake.readonly!
       fake
     end
+    
+    def updates(reload = false)
+      saves(reload).without_creations
+    end
 
     def reverted?; !!@reverted; end
     
@@ -134,7 +145,7 @@ module Historical::IsHistorical
       if new_record?
         0
       else
-        (model_updates(reload).maximum(:version) || 0) + 1
+        (saves(reload).maximum(:version) || 0) + 1
       end
     end
     

@@ -6,6 +6,7 @@ class HistoricalTest < ActiveSupport::TestCase
   context "A person (:only => email) instance" do
     setup do
       @person = HistoricalTestModels::Person.create!(:name => "max", :email => "max@example.com")
+      assert_equal 1, @person.saves.count
     end
     
     should "only track email updates" do
@@ -14,6 +15,7 @@ class HistoricalTest < ActiveSupport::TestCase
       @person.save!
       @person.reload
       
+      assert_equal 2, @person.saves.count
       assert_equal 1, @person.updates.count
       assert_equal ["email"], @person.attribute_updates.collect { |x| x.attribute }
     end
@@ -26,6 +28,9 @@ class HistoricalTest < ActiveSupport::TestCase
   context "An Account instance" do
     setup do
       @account = Account.create!(:login => "jane", :password => "doe")
+      @account.reload
+      assert_equal 1, @account.saves.count
+      assert_not_nil @account.creation
     end
     
     should "track timestamp updates but not password updates" do
@@ -34,6 +39,7 @@ class HistoricalTest < ActiveSupport::TestCase
       @account.save!
       @account.reload
       
+      assert_equal 2, @account.saves.count
       assert_equal 1, @account.updates.count
       assert_equal ["login", "updated_at"].to_set, @account.attribute_updates.collect{ |x| x.attribute }.to_set
     end
@@ -42,12 +48,15 @@ class HistoricalTest < ActiveSupport::TestCase
   context "A Post instance" do
     setup do
       @post = HistoricalTestModels::Post.create!(:topic => "hello world", :content => "dlrow olleh")
+      @post.reload
+      assert_equal 1, @post.saves.count
     end
     
     context "with no changes" do     
       should "not spawn a new version when saved" do
         @post.save!
         @post.reload
+        
         assert_equal 0, @post.updates.count
         assert_equal false, @post.reverted?
         assert_equal 1, @post.version
@@ -62,6 +71,10 @@ class HistoricalTest < ActiveSupport::TestCase
       should "should spawn a new version when saved" do
         @post.save!
         @post.reload
+        
+        assert_equal 2, @post.saves.count
+        assert_equal ["ModelCreation", "ModelUpdate"], @post.saves.collect{|x| x[:type]}
+        assert_equal ["ModelCreation", "ModelUpdate"], @post.saves.collect{|x| x.class.name}
         
         assert_equal 1, @post.updates.count
         assert_equal 1, @post.updates.first.version

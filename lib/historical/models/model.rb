@@ -1,25 +1,28 @@
-class ModelUpdate < ActiveRecord::Base
-  set_table_name :model_updates
-
-  named_scope :most_recent, :order => "version DESC", :limit => 1
+class ModelSave < ActiveRecord::Base
+  set_table_name :model_saves
   
+  default_scope :order => "model_saves.target_type ASC, model_saves.target_id ASC, model_saves.version ASC"
+  
+  validates_presence_of :type
   validates_presence_of :target
   validates_presence_of :version
-  validates_numericality_of :version, :greater_than => 0
+  validates_numericality_of :version, :only_integer => true
   validates_uniqueness_of :version, :scope => [:target_type, :target_id]
   
   belongs_to :target, :polymorphic => true
   belongs_to :author, :polymorphic => true
   
-  has_many :attribute_updates, :dependent => :destroy
+  has_many :attribute_updates, :foreign_key => :parent_id, :dependent => :destroy
   
   alias attr_updates attribute_updates
+end
+
+class ModelUpdate < ModelSave
+  validates_numericality_of :version, :greater_than => 0
   
   # Sets the +version+ number (simply the next available number determined via SQL).
   before_validation_on_create do |model|
-    if model.target
-      model.version = model.target.latest_version
-    end
+    model.version = model.target.latest_version if model.target
   end
   
   # Will apply a set of +changes+ (retrieved via Rails' dirty changes) and
@@ -73,4 +76,14 @@ class ModelUpdate < ActiveRecord::Base
   end
   
   alias_method_chain :method_missing, :changes
+end
+
+class ModelCreation < ModelSave
+  validates_numericality_of :version, :equal_to => 0
+  validates_uniqueness_of :target_id, :scope => [:target_type]
+  
+  # Sets the +version+ number (simply the next available number determined via SQL).
+  before_validation_on_create do |model|
+    model.version = 0
+  end
 end

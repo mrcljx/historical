@@ -22,8 +22,8 @@ class RevertTest < ActiveSupport::TestCase
       assert_equal 6, @post.latest_version
       assert_equal 6, @post.version
       
-      assert_equal 5, @post.model_updates.count
-      assert_equal [1,2,3,4,5].to_set, @post.model_updates.collect{ |v| v.version }.to_set
+      assert_equal 5, @post.updates.count
+      assert_equal [1,2,3,4,5].to_set, @post.updates.collect{ |v| v.version }.to_set
     end
     
     should "be able to time-travel" do

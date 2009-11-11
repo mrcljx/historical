@@ -25,6 +25,19 @@ class MergeTest < ActiveSupport::TestCase
       @post = HistoricalTestModels::MergeablePost.create!(:topic => "hello world", :content => "dlrow olleh")
     end
     
+    should "not merge creation when updated" do
+      @post.topic = "hello world again"
+      @post.save!
+      
+      assert_equal 1, @post.updates.count
+      assert_equal 2, @post.saves.count
+      
+      assert_equal 0, @post.creation.attribute_updates.count
+      
+      assert_equal "hello world", @post.updates.last.old_topic
+      assert_equal "hello world again", @post.updates.last.new_topic
+    end
+    
     context "which has been changed 3 minutes ago" do
       setup do
         @post.topic = "hello world again"
