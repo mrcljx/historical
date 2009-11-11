@@ -33,13 +33,13 @@ Will my old versions become useless?*). As a nice side-effect this allows fast r
 * Allows you to get **every previous version**.
 * Allows you to get the **differences** between a version and the predecessor (to build a "What's new?" feature).
 * Allows you to specify which attributes you want to keep versioned.
+* Allows you to track **who did the updates** (auditing) easily.
 * Supports **auto-merging** of versions by time-limit or customized rules.
 * Supports outgoing **associations** (belongs_to) - but will not cascade version-dates.
 * Only stores differences of updated attributes.
 * Does not store updates which don't change anything (or which only change attributes you are ignoring).
 * Unobstrusive versioning **without serialization** of complex data-types.
 * Stores everything in a single database table.
-* TODO: current_user (auditing)
 
 ## Rails Version
 
@@ -144,6 +144,50 @@ Now let's take a look again.
     post.update_attributes!(:topic => "Hi")     # User B restores topic manually
     post.version                                # => 1
     post.model_updates.count                    # => 0
+
+## Auditing (Who did it?)
+
+If your ApplicationController defines a `current_user` method (like in Authlogic) `historical` will use this value
+and saves it in the polymorphic `author` association of a `ModelChange`.
+    
+    def some_action
+      post = Post.create!(:topic => "Hi")
+      post.update_attributes!(:topic => "Bye!")     # Works by default if current_user is available
+      post.updates.last.author                      # => <Person name="John">
+    
+      Post.as_historical_author(nil) do             # you can also use ActiveRecord::Base.as_historical_author
+        post.update_attributes!(:topic => "Hello")
+        post.updates.last.author                    # => nil
+      end
+    end
+    
+**Note** Historical sets up an `as_historical_author(current_user)` call via `around_filter :with_historical_author`.
+
+## Disable Historical temporarily (TODO)
+
+**Note:** This isn't ready yet!
+
+    post = Post.create!(:topic => "Hi")
+    post.update_attributes!(:topic => "Hello")
+    
+    Post.without_historical do
+      post.update_attributes!(:topic => "Cya!")
+    end
+    
+    post.updates.count               # => 1
+    post.updates.first.old_topic     # => "Hello"
+    post.updates.first.new_topic     # => "Cya!"
+    post.topic                       # => "Cya!"
+    
+    Post.without_historical :consistent => false do
+      post.update_attributes!(:topic => "Bye")
+    end
+    
+    post.updates.count               # => 1
+    post.updates.first.old_topic     # => "Hello"
+    post.updates.first.new_topic     # => "Cya!"
+    post.topic                       # => "Bye"
+
 
 ## How to Migrate?
 
