@@ -1,7 +1,8 @@
 class HistoricalMigration < ActiveRecord::Migration
   def self.up
-    create_table :model_updates do |t|
+    create_table :model_saves do |t|
       t.integer :version
+      t.string  :type
       t.text    :cause
       
       t.integer :target_id
@@ -14,7 +15,7 @@ class HistoricalMigration < ActiveRecord::Migration
     end
   
     create_table :attribute_updates do |t|
-      t.integer :model_update_id
+      t.integer :parent_id
       
       t.string :attribute
       t.string :attribute_type
@@ -28,7 +29,7 @@ class HistoricalMigration < ActiveRecord::Migration
   end
   
   def self.down
-    drop_table :model_updates
+    drop_table :model_saves
     drop_table :attribute_updates
   end
 end
