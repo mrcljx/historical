@@ -148,7 +148,7 @@ Now let's take a look again.
 ## Auditing (Who did it?)
 
 If your ApplicationController defines a `current_user` method (like in Authlogic) `historical` will use this value
-and saves it in the polymorphic `author` association of a `ModelChange`.
+and saves it in the polymorphic `author` association of a `ModelUpdate`.
     
     def some_action
       post = Post.create!(:topic => "Hi")
@@ -161,7 +161,7 @@ and saves it in the polymorphic `author` association of a `ModelChange`.
       end
     end
     
-**Note** Historical sets up an `as_historical_author(current_user)` call via `around_filter :with_historical_author`.
+**Note** Historical simply sets up an `as_historical_author(current_user)` call via `around_filter :with_historical_author`.
 
 ## Disable Historical temporarily (TODO)
 
