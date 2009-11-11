@@ -71,9 +71,11 @@ Setting up *Historical* only needs a single line of code in each model you want 
     post = Post.find 1
     post.version                        # => 5
     post.author                         # => <Person name="Jane">
-    post.model_updates                  # => [<ModelUpdate>, <ModelUpdate>, ...]
+    post.updates                        # => [<ModelUpdate>, <ModelUpdate>, ...]
+    post.creation                       # => <ModelCreation>
+    post.saves                          # => [<ModelCreation>, <ModelUpdate>, <ModelUpdate>, ...]
     
-    update = post.model_updates.first
+    update = post.updates.first
     update.version                      # => 1
     update.attribute_updates            # => [<AttributeUpdate>, ...]
     
@@ -85,7 +87,11 @@ Setting up *Historical* only needs a single line of code in each model you want 
     # you might also use a shortcut
     update.old_topic                    # => "Hi"
     update.new_topic                    # => "Hello"
+    
+### Getting Updates and Creation (if available)
 
+    post = Post.find 1
+    post.version                        # => 5
 
 ### Reverting to Older Versions
 
@@ -117,7 +123,7 @@ Here is a simple szenario where auto-merging might be useful.
     post.update_attributes!(:topic => "Hello")  # User B fixes typo in topic ten seconds later
 
     post.version                                # => 3
-    post.model_updates.count                    # => 2
+    post.updates.count                          # => 2
 
 Why not only have one `ModelUpdate` because this fix was added so quick after the last version? Just
 update your Post model with this:
@@ -131,8 +137,8 @@ Now let's take a look again.
     post.update_attributes!(:topic => "Hello")  # User B fixes typo in topic ten seconds later
 
     post.version                                # => 2
-    post.model_updates.count                    # => 1
-    update = post.model_updates.first
+    post.updates.count                          # => 1
+    update = post.updates.first
     change = update.attribute_updates.first
     
     change.attribute                            # => "topic"
@@ -143,12 +149,12 @@ Now let's take a look again.
     
     post.update_attributes!(:topic => "Hi")     # User B restores topic manually
     post.version                                # => 1
-    post.model_updates.count                    # => 0
+    post.updates.count                          # => 0
 
 ## Auditing (Who did it?)
 
 If your ApplicationController defines a `current_user` method (like in Authlogic) `historical` will use this value
-and saves it in the polymorphic `author` association of a `ModelUpdate`.
+and saves it in the polymorphic `author` association of a `ModelSave`.
     
     def some_action
       post = Post.create!(:topic => "Hi")
@@ -195,7 +201,17 @@ Should you consider doing a migration on your versioned model tabel, you might n
 
     rename_column :posts, :topic, :title
     execute "UPDATE attribute_updates upd SET upd.attribute = 'title' WHERE upd.target_type = 'Post' AND upd.attribute = 'topic'"
-    
+
+## Interaction with 3rd Party Plugins
+
+Historical won't prevent your model from being destroyed. Should your model be destroyed all versions
+will be destroyed as well. However you might consider to use [`is_paranoid`](http://github.com/semanticart/is_paranoid)
+by [semanticart](http://github.com/semanticart) for that. Historical will then detect updates on the `deleted_at` column
+and store a new version.
+
+**Note:** `is_paranoid` was discontinued by **semanticart** in October 2009. I recommend to
+[read about the whys](http://blog.semanticart.com/killing_is_paranoid/). These are also the reasons
+why such feature isn't implemented in Historical by itself.
 
 ## Intellectual Property
 
