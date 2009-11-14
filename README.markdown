@@ -59,7 +59,7 @@ Developed with/for Rails 2.3.4
 Setting up *Historical* only needs a single line of code in each model you want to have updates/versions for.
 
     class Post < ActiveRecord::Base
-      historical
+      is_historical
       
       belongs_to :author, :class_name => "Person"
       
@@ -107,7 +107,7 @@ Setting up *Historical* only needs a single line of code in each model you want 
     previous_post.version               # => 4
     
 
-## Configure `historical`
+## Options for `is_historical`
 
     historical :only => [:topic]             # will only track the specified attributes
     historical :except => [:password]        # let's you restrict which attributes should be tracked

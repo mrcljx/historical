@@ -1,5 +1,5 @@
 module HistoricalTestModels
   class Person < ActiveRecord::Base
-    historical :only => :email
+    is_historical :only => :email
   end
 end

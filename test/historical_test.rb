@@ -22,7 +22,7 @@ class HistoricalTest < ActiveSupport::TestCase
   end
   
   class Account < ActiveRecord::Base
-    historical :except => :password, :timestamps => true
+    is_historical :except => :password, :timestamps => true
   end
   
   context "An Account instance" do

@@ -39,8 +39,8 @@ module Historical::IsHistorical
     # * <tt>only</tt> - only includes the specified columns for versioning
     # * <tt>timestamps</tt> - whether or not to include created_at and updated_at for versioning (default: false)
     # * <tt>merge</tt> - options for update-merging to avoid clutter (default: false)
-    def historical(options = {})
-      raise "historical was already called" if @historical_enabled
+    def is_historical(options = {})
+      raise "is_historical was already called" if @historical_enabled
       @historical_enabled = true
       
       options = {:timestamps => false, :only => false, :except => false}.merge(options)
