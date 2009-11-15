@@ -13,5 +13,7 @@ module HistoricalTestModels
     is_historical
     
     belongs_to :author, :class_name => "HistoricalTestModels::Person"
+    
+    belongs_to :parent, :polymorphic => true
   end
 end

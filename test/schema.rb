@@ -4,6 +4,8 @@ ActiveRecord::Schema.define(:version => 0) do
     t.text :content
     t.integer :author_id
     t.integer :rating
+    t.integer :parent_id
+    t.string :parent_type
     t.timestamps
   end
   create_table :people, :force => true do |t|

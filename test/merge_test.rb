@@ -43,7 +43,7 @@ class MergeTest < ActiveSupport::TestCase
         @post.topic = "hello world again"
         @post.save!
         @post.reload
-        @post.updates.first.update_attributes!(:created_at => 3.minute.ago)
+        @post.updates.first.update_attributes!(:created_at => 3.minutes.ago)
         @post.reload
       end
       

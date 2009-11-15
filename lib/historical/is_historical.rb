@@ -98,9 +98,11 @@ module Historical::IsHistorical
             update = model.updates.create!(:author => author)
             changes.collect do |attribute, diff|
               update.attribute_updates.create! do |change|
+                column = model.column_for_attribute(attribute.to_s)
+                raise "no such column: #{attribute}" unless column
                 change.parent = update
                 change.attribute = attribute.to_s
-                change.attribute_type = model.column_for_attribute(attribute.to_s).type.to_s
+                change.attribute_type = column.type.to_s
                 change.update_by_diff(diff)
               end
             end

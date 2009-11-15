@@ -49,6 +49,54 @@ class ModelUpdate < ModelSave
     end
   end
   
+  def modified_attributes
+    @modified_attributes ||= attribute_updates.collect{ |u| u.attribute.to_sym }.to_set
+  end
+  
+  def modified_attributes_without_associations
+    returning modified_attributes.clone do |result|
+      outgoing_association_attributes.each do |attr, assoc|
+        result.delete(attr) if result.include? attr
+      end
+    end
+  end
+  
+  def modified_attributes_and_associations
+    returning modified_attributes.clone do |result|
+      outgoing_association_attributes.each do |attr, assoc|
+        if result.include? attr
+          result.delete(attr)
+          result << assoc.name.to_sym
+        end
+      end
+    end
+  end
+  
+  alias :modifications :modified_attributes_and_associations
+  
+  protected
+  
+  def model_class
+    target_type.constantize
+  end
+  
+  def outgoing_association_attributes
+    @outgoing_association_attributes ||= returning({}) do |result|
+      outgoing_associations.each do |assoc|
+        result[assoc.primary_key_name.to_sym] = assoc
+        if assoc.options[:polymorphic]
+          col = assoc.options[:foreign_type]
+          result[col.to_sym] = assoc
+        end
+      end
+    end
+  end
+  
+  def outgoing_associations
+    model_class.reflect_on_all_associations(:belongs_to)
+  end
+  
+  # resolves associations
   def method_missing_with_changes(method, *args)
     method_name = method.to_s
     if method_name =~ /^(old|new)_([[:alnum:]_]+)$/
@@ -61,7 +109,7 @@ class ModelUpdate < ModelSave
         change.send action
       
       # find ActiveRecord::Reflection::MacroReflection
-      elsif assoc = target.class.reflect_on_association(name.to_sym)
+      elsif assoc = model_class.reflect_on_association(name.to_sym)
         raise "only supports belongs_to" unless assoc.belongs_to?
         raise "polymophic not supported yet" if assoc.options[:polymorphic]
         assoc.klass.find(self.send("#{action}_#{assoc.primary_key_name}"))
