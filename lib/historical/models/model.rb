@@ -115,9 +115,10 @@ class ModelUpdate < ModelSave
         if assoc.options[:polymorphic]
           id = self.send("#{action}_#{assoc.primary_key_name}")
           type = self.send("#{action}_#{assoc.options[:foreign_type]}")
-          type ? type.constantize.find(id) : nil
+          (type and id) ? type.constantize.find(id) : nil
         else
-          assoc.klass.find(self.send("#{action}_#{assoc.primary_key_name}"))
+          id = self.send("#{action}_#{assoc.primary_key_name}")
+          id ? assoc.klass.find(id) : nil
         end
         
       # failed
