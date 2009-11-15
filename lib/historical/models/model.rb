@@ -111,8 +111,14 @@ class ModelUpdate < ModelSave
       # find ActiveRecord::Reflection::MacroReflection
       elsif assoc = model_class.reflect_on_association(name.to_sym)
         raise "only supports belongs_to" unless assoc.belongs_to?
-        raise "polymophic not supported yet" if assoc.options[:polymorphic]
-        assoc.klass.find(self.send("#{action}_#{assoc.primary_key_name}"))
+        
+        if assoc.options[:polymorphic]
+          id = self.send("#{action}_#{assoc.primary_key_name}")
+          type = self.send("#{action}_#{assoc.options[:foreign_type]}")
+          type ? type.constantize.find(id) : nil
+        else
+          assoc.klass.find(self.send("#{action}_#{assoc.primary_key_name}"))
+        end
         
       # failed
       else

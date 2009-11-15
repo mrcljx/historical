@@ -60,7 +60,7 @@ class AssociationsTest < ActiveSupport::TestCase
         assert_equal [:parent_id, :parent_type, :topic].to_set, change.modified_attributes.to_set
       end
       
-      should "hide changed _id if requested" do
+      should "hide changed _id and_type if requested" do
         change = @post.saves.last
         assert_equal [:topic].to_set, change.modified_attributes_without_associations.to_set
       end
@@ -68,6 +68,12 @@ class AssociationsTest < ActiveSupport::TestCase
       should "report the changed association as a modification" do
         change = @post.saves.last
         assert_equal [:parent, :topic].to_set, change.modifications.to_set
+      end
+      
+      should "support support queries for new and old values" do
+        change = @post.saves.last
+        assert_equal nil, change.old_parent
+        assert_equal @jane, change.new_parent
       end
     end
   end
