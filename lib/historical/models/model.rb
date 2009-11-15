@@ -18,6 +18,8 @@ class ModelSave < ActiveRecord::Base
 end
 
 class ModelUpdate < ModelSave
+  class AttributeDidNotChange < StandardError; end
+  
   validates_numericality_of :version, :greater_than => 0
   
   # Sets the +version+ number (simply the next available number determined via SQL).
@@ -96,6 +98,16 @@ class ModelUpdate < ModelSave
     model_class.reflect_on_all_associations(:belongs_to)
   end
   
+  def older_value(attribute)
+    result = target.attribute_updates.first(:conditions => ["model_saves.version < ? AND attribute = ?", version, attribute.to_s], :limit => 1, :order => "version DESC")
+    result ? result.new : target[attribute.to_sym]
+  end
+  
+  def newer_value(attribute)
+    result = target.attribute_updates.first(:conditions => ["model_saves.version > ? AND attribute = ?", version, attribute.to_s], :limit => 1, :order => "version ASC")
+    result ? result.old : target[attribute.to_sym]
+  end
+  
   # resolves associations
   def method_missing_with_changes(method, *args)
     method_name = method.to_s
@@ -105,19 +117,30 @@ class ModelUpdate < ModelSave
       # try to find a column
       if column = target.column_for_attribute(name)
         change = attribute_updates.find_by_attribute(column.name)
-        raise "#{name} didn't change" unless change
+        raise AttributeDidNotChange, "#{name} didn't change" unless change
         change.send action
       
       # find ActiveRecord::Reflection::MacroReflection
       elsif assoc = model_class.reflect_on_association(name.to_sym)
         raise "only supports belongs_to" unless assoc.belongs_to?
+        foreign_key = assoc.primary_key_name
         
         if assoc.options[:polymorphic]
-          id = self.send("#{action}_#{assoc.primary_key_name}")
-          type = self.send("#{action}_#{assoc.options[:foreign_type]}")
+          foreign_type_key = assoc.options[:foreign_type]
+          id = type = nil
+          begin
+            id = self.send("#{action}_#{foreign_key}")
+          rescue AttributeDidNotChange
+            id = (action == "new") ? newer_value(foreign_key) : older_value(foreign_key)
+          end
+          begin
+            type = self.send("#{action}_#{foreign_type_key}")
+          rescue AttributeDidNotChange
+            type = (action == "new") ? newer_value(foreign_type_key) : older_value(foreign_type_key)
+          end
           (type and id) ? type.constantize.find(id) : nil
         else
-          id = self.send("#{action}_#{assoc.primary_key_name}")
+          id = self.send("#{action}_#{foreign_key}")
           id ? assoc.klass.find(id) : nil
         end
         

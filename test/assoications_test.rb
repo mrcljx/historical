@@ -75,6 +75,46 @@ class AssociationsTest < ActiveSupport::TestCase
         assert_equal nil, change.old_parent
         assert_equal @jane, change.new_parent
       end
+      
+      should "support support queries even if only the id changed" do
+        @post.parent = @john
+        @post.save!
+        @post.reload
+        
+        change = @post.saves.last
+        assert_equal @jane, change.old_parent
+        assert_equal @john, change.new_parent
+        
+        # to other
+        
+        @post.parent = @jane
+        @post.save!
+        @post.reload
+        
+        change = @post.saves.last
+        assert_equal @john, change.old_parent
+        assert_equal @jane, change.new_parent
+        
+        # to self
+        
+        @post.parent = @post
+        @post.save!
+        @post.reload
+        
+        change = @post.saves.last
+        assert_equal @jane, change.old_parent
+        assert_equal @post, change.new_parent
+        
+        # to nil
+        
+        @post.parent = nil
+        @post.save!
+        @post.reload
+        
+        change = @post.saves.last
+        assert_equal @post, change.old_parent
+        assert_equal nil, change.new_parent
+      end
     end
   end
 end
