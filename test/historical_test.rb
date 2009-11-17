@@ -22,13 +22,17 @@ class HistoricalTest < ActiveSupport::TestCase
   end
   
   class Account < ActiveRecord::Base
-    is_historical :except => :password, :timestamps => true
+    is_historical :except => :password, :timestamps => true, :require_author => true
   end
   
   context "An Account instance" do
     setup do
+      @person = HistoricalTestModels::Person.create!(:name => "max", :email => "max@example.com")
+      Historical::ActionControllerExtension.historical_author = @person
+      
       @account = Account.create!(:login => "jane", :password => "doe")
       @account.reload
+      
       assert_equal 1, @account.saves.count
       assert_not_nil @account.creation
     end
@@ -41,7 +45,25 @@ class HistoricalTest < ActiveSupport::TestCase
       
       assert_equal 2, @account.saves.count
       assert_equal 1, @account.updates.count
+      
       assert_equal ["login", "updated_at"].to_set, @account.attribute_updates.collect{ |x| x.attribute }.to_set
+    end
+    
+    should "raise an exception on update if no author is given" do
+      Historical::ActionControllerExtension.as_historical_author(nil) do
+        assert_raise Historical::AuthorRequired do
+          @account.login = "john"
+          @account.save!
+        end
+      end
+    end
+    
+    should "raise an exception if no author is given" do
+      Historical::ActionControllerExtension.as_historical_author(nil) do
+        assert_raise Historical::AuthorRequired do
+          Account.create!(:login => "john", :password => "wayne")
+        end
+      end
     end
   end
   
