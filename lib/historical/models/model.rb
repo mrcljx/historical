@@ -14,6 +14,9 @@ class ModelSave < ActiveRecord::Base
   
   has_many :attribute_updates, :foreign_key => :parent_id, :dependent => :destroy
   
+  named_scope :without_creations, :conditions => "model_saves.type <> 'ModelCreation'"
+  named_scope :only_creations, :conditions => "model_saves.type = 'ModelCreation'"
+  
   alias attr_updates attribute_updates
 end
 

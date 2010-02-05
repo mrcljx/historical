@@ -35,6 +35,7 @@ class HistoricalTest < ActiveSupport::TestCase
       
       assert_equal 1, @account.saves.count
       assert_not_nil @account.creation
+      assert_equal @account, @account.creation.target
     end
     
     should "track timestamp updates but not password updates" do

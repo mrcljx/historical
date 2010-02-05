@@ -3,7 +3,9 @@ require 'active_support'
 require 'active_support/test_case'
 
 ENV['RAILS_ENV'] = 'test'
-ENV['RAILS_ROOT'] ||= File.dirname(__FILE__) + '/../../../..'
+ENV['RAILS_ROOT'] ||= File.expand_path(File.dirname(__FILE__) + '/../../../..')
+
+puts ENV['RAILS_ROOT']
 
 require 'test/unit'
 require 'shoulda'

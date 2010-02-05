@@ -59,7 +59,6 @@ module Historical
         
         has_many :saves, :class_name => "ModelSave", :as => :target, :dependent => :destroy
         has_many :updates, :class_name => "ModelUpdate", :as => :target
-        has_one :creation, :class_name => "ModelCreation", :as => :target
         
         has_many :attribute_updates, :through => :updates
         
@@ -79,6 +78,8 @@ module Historical
             raise Historical::AuthorRequired.new(model) if require_author and not author
             model.saves << ModelCreation.create!(:author => author, :target => model)
           end
+          
+          model
         end
         
         after_update do |model|
@@ -118,6 +119,8 @@ module Historical
               end
             end
           end
+          
+          model
         end
       end
     end
@@ -149,6 +152,10 @@ module Historical
       
       def updates(reload = false)
         saves(reload).without_creations
+      end
+      
+      def creation(reload = false)
+        saves(reload).only_creations.first
       end
 
       def reverted?; !!@reverted; end
