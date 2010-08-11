@@ -8,7 +8,7 @@ begin
     gem.summary = %Q{TODO: one-line summary of your gem}
     gem.description = %Q{TODO: longer description of your gem}
     gem.email = "marcel@northdocks.com"
-    gem.homepage = "http://github.com/sirlantis/historical2"
+    gem.homepage = "http://github.com/sirlantis/historical"
     gem.authors = ["Marcel Jackwerth"]
     gem.add_development_dependency "rspec", ">= 1.2.9"
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
@@ -39,7 +39,7 @@ Rake::RDocTask.new do |rdoc|
   version = File.exist?('VERSION') ? File.read('VERSION') : ""
 
   rdoc.rdoc_dir = 'rdoc'
-  rdoc.title = "historical2 #{version}"
+  rdoc.title = "historical #{version}"
   rdoc.rdoc_files.include('README*')
   rdoc.rdoc_files.include('lib/**/*.rb')
 end
