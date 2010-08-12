@@ -26,7 +26,8 @@ ActiveRecord::Base.silence do
       t.text      :body
       t.integer   :votes
       t.datetime  :published_at
-      t.boolean   :read
+      t.date      :stamped_on
+      t.boolean   :read,          :null => false, :default => false
     end
   end
 end

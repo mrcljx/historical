@@ -38,6 +38,8 @@ module Historical
       key :record_id, Integer, :required => true
       key :record_type, String, :required => true
       timestamps!
+      
+      one :diff, :class_name => "Historical::Models::ModelDiff"
   
       def record
         record_type.constantize.find(record_id)
@@ -57,18 +59,27 @@ module Historical
       
       IGNORED_ATTRIBUTES = [:id, :created_at, :updated_at]
   
-      key :record_id, Integer, :required => true
-      key :record_type, String, :required => true
+      validates_associated :changes
   
-      key :diff_type, String, :required => true
-      key :type, String
-  
-      one :old_version, :class_name => "Historical::Models::ModelVersion"
-      one :new_version, :class_name => "Historical::Models::ModelVersion"
+      key :record_id,   Integer,  :required => true
+      key :record_type, String,   :required => true
       
-      many :changes, :class_name => "Historical::Models::AttributeDiff"
+      key :diff_type,   String,   :required => true
+      key :type,        String
       
       timestamps!
+  
+      belongs_to :new_version, :class_name => "Historical::Models::ModelVersion", :required => true
+      
+      def old_version
+        new_version.previous
+      end
+      
+      many :changes, :class_name => "Historical::Models::AttributeDiff"
+  
+      def record
+        record_type.constantize.find(record_id)
+      end
   
       def self.from_versions(from, to)
         return from_creation(to) if from.nil?
@@ -84,6 +95,7 @@ module Historical
               ad.old_value = old_value
               ad.new_value = new_value
               ad.attribute = attr.to_s
+              ad.attribute_type = AttributeDiff.detect_attribute_type(d, attr)
               d.changes << ad
             end if old_value != new_value
           end
@@ -110,9 +122,37 @@ module Historical
     class AttributeDiff
       include MongoMapper::EmbeddedDocument
       
-      key :attribute, String
-      key :old_value, Object
-      key :new_value, Object
+      key :attribute,       String, :required => true
+      key :attribute_type,  String, :required => true
+      key :_old_value,      Object
+      key :_new_value,      Object
+      
+      alias :old_value :_old_value
+      alias :new_value :_new_value
+      
+      validate :check_attribute_type
+      
+      def old_value=(value)
+        self._old_value = value
+      end
+      
+      def new_value=(value)
+        self._new_value = value
+      end
+      
+      def self.detect_attribute_type(parent, attribute)
+        column = parent.record.class.columns.select do |c|
+          c.name.to_s == attribute.to_s
+        end.first
+        
+        column ? column.type.to_s : nil
+      end
+      
+      protected :_old_value=, :_new_value=, :_old_value, :_new_value
+      
+      def check_attribute_type
+        #errors.add(:attribute_type, :not_set)
+      end
     end
   end
 end
