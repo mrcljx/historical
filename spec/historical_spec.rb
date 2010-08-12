@@ -16,11 +16,11 @@ describe "A historical model" do
       msg = Message.create(:title => "Hello")
       
       msg.history.tap do |h|
-        h.versions.count.should be(1)
-        h.diffs.count.should be(1)
-        h.updates.should be_empty
+        h.versions.count.should   be(1)
+        h.diffs.count.should      be(1)
+        h.updates.should          be_empty
         
-        h.creation.should_not be_nil
+        h.creation.should_not     be_nil
         h.creation.diff_type.should == "creation"
       end
     end
@@ -56,19 +56,19 @@ describe "A historical model" do
     
     it "should create new versions" do
       @msg.history.tap do |h|
-        h.versions.count.should == 2
+        h.versions.count.should         == 2
         h.original_version.title.should == @first_title
-        h.latest_version.title.should == @new_title
+        h.latest_version.title.should   == @new_title
       end
     end
     
     it "should create an update-diff" do
       @msg.history.tap do |h|
-        h.updates.count.should == 1
-        h.updates.first.diff_type.should == "update"
+        h.updates.count.should            == 1
+        h.updates.first.diff_type.should  == "update"
         
-        h.creation.should == h.diffs.first
-        h.updates.first.should == h.diffs.last
+        h.creation.should       == h.diffs.first
+        h.updates.first.should  == h.diffs.last
       end
     end
     
