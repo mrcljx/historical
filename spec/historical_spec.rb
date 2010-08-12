@@ -33,7 +33,7 @@ describe "A historical model" do
       @msg.save!
     end
     
-    it "should not create new versions if nothing changed" do
+    it "should not create new versions" do
       version_count = lambda { @msg.history.versions.count }
       diff_count    = lambda { @msg.history.diffs.count }
     
@@ -61,7 +61,9 @@ describe "A historical model" do
       m.save!
       
       m.history.updates.count.should == 1
-      changes = m.history.updates.last.changes
+      change = m.history.updates.last
+      change.reload
+      changes = change.changes
       grouped = {}
       
       changes.each do |c|
@@ -80,9 +82,11 @@ describe "A historical model" do
       grouped[:read].new_value == true
       grouped[:read].old_value == false
       
+      grouped[:published_at].new_value.class.should == Time
       grouped[:published_at].new_value == time
       grouped[:published_at].old_value == nil
       
+      grouped[:stamped_on].new_value.class.should == Date
       grouped[:stamped_on].new_value == date
       grouped[:stamped_on].old_value == nil
     end

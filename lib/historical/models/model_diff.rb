@@ -36,11 +36,12 @@ module Historical::Models
     
           old_value, new_value = from[attr], to[attr]
          
-          AttributeDiff.new.tap do |ad|              
+          Historical::Models::AttributeDiff.specialized_for(d, attr).new.tap do |ad|
+            ad.attribute_type = Historical::Models::AttributeDiff.detect_attribute_type(d, attr)
+            ad.parent = d
             ad.old_value = old_value
             ad.new_value = new_value
             ad.attribute = attr.to_s
-            ad.attribute_type = AttributeDiff.detect_attribute_type(d, attr)
             d.changes << ad
           end if old_value != new_value
         end

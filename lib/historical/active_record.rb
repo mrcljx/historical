@@ -25,7 +25,8 @@ module Historical
             record.attribute_names.each do |attr_name|
               attr = attr_name.to_sym
               next if Historical::Models::ModelDiff::IGNORED_ATTRIBUTES.include? attr
-              v[attr] = record[attr]
+              val = record[attr]
+              v[attr] = (val and val.class.respond_to?(:to_mongo)) ? val.class.to_mongo(val) : val
             end
             
             v.save!
