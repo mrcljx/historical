@@ -1,10 +1,6 @@
 --color
 --format
-progress
---format 
-failing_examples:previous_failures.txt
---example
-previous_failures.txt
+nested
 --loadby
 mtime
 --reverse
