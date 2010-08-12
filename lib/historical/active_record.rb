@@ -19,23 +19,23 @@ module Historical
         after_save do |record|
           next unless record.historical_creation or record.historical_differences
           
-          version = Models::ModelVersion.new.tap do |v|
+          version = Historical::Models::ModelVersion.new.tap do |v|
             v.record_id, v.record_type = record.id, record.class.name
             
             record.attribute_names.each do |attr_name|
               attr = attr_name.to_sym
-              next if Models::ModelDiff::IGNORED_ATTRIBUTES.include? attr
+              next if Historical::Models::ModelDiff::IGNORED_ATTRIBUTES.include? attr
               v[attr] = record[attr]
             end
             
             v.save!
           end
           
-          Models::ModelDiff.from_versions(version.previous, version)
+          Historical::Models::ModelDiff.from_versions(version.previous, version)
         end
         
         def history
-          @history ||= Models::ModelHistory.new(self)
+          @history ||= Historical::ModelHistory.new(self)
         end
       end
     end
