@@ -16,8 +16,6 @@ module Historical::Models
     alias_method :new_value, :_new_value    
 
     protected :_old_value=, :_new_value=, :_old_value, :_new_value
-  
-    validate :check_attribute_type
     
     def self.specialized_for(parent, attribute)
       type = detect_attribute_type(parent, attribute)
@@ -28,6 +26,8 @@ module Historical::Models
       ruby_type = case type.to_sym
       when :datetime then "Time"
       when :text then "String"
+      when :decimal then "Float"
+      when :timestamp then "Time"
       else
         type.classify
       end
@@ -58,17 +58,13 @@ module Historical::Models
     end
     
     protected
-  
-    def check_attribute_type
-      #errors.add(:attribute_type, :not_set)
-    end
     
     def cast_value(value)
       value
     end
   end
   
-  %w{Date String Time Boolean Integer}.each do |type|
+  %w{Date String Time Boolean Integer Float Binary}.each do |type|
     superclass = AttributeDiff
     diff_class = Class.new(superclass)
     type_class = type.constantize

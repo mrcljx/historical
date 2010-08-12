@@ -56,6 +56,7 @@ describe "A historical model" do
       m.body = "I am no spambot."
       m.votes = 42
       m.read = true
+      m.donated = 13.37
       m.published_at = time
       m.stamped_on = date
       m.save!

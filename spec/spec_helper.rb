@@ -27,6 +27,7 @@ ActiveRecord::Base.silence do
       t.integer   :votes
       t.datetime  :published_at
       t.date      :stamped_on
+      t.decimal   :donated,       :precision => 10, :scale => 2
       t.boolean   :read,          :null => false, :default => false
     end
   end
