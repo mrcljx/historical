@@ -14,11 +14,20 @@ require 'active_record'
 require 'mongo_mapper'
 
 ActiveRecord::Base.establish_connection(:adapter => "sqlite3", :database => ":memory:")
+ActiveRecord::Base.logger ||= Logger.new(STDOUT)  
+ActiveRecord::Base.logger.level = Logger::WARN
 
-ActiveRecord::Schema.define(:version => 1) do
-  create_table :messages do |t|
-    t.string :title
-    t.text   :body
+ActiveRecord::Base.silence do
+  ActiveRecord::Schema.define(:version => 1) do
+    self.verbose = false
+    
+    create_table :messages do |t|
+      t.string    :title
+      t.text      :body
+      t.integer   :votes
+      t.datetime  :published_at
+      t.boolean   :read
+    end
   end
 end
 
