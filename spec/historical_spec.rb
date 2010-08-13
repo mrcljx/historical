@@ -154,4 +154,53 @@ describe "A historical model" do
       end
     end
   end
+  
+  context "when restored" do
+    before :each do
+      @message = Message.create(:title => "one")
+      @message.title = "two"
+      @message.save!
+
+      @restored = @message.history.restore(@message.history.original_version)
+    end
+    
+    it "should contain the previous values" do
+      r = @restored
+      r.should_not    be_nil
+      r.should        be_kind_of(Message)
+      r.title.should  == "one"
+    end
+    
+    it "should not modifiy the original" do
+      @message.title.should == "two"
+    end
+    
+    it "should be read-only" do
+      lambda { @restored.save! }.should raise_exception(ActiveRecord::ReadOnlyRecord)
+    end
+  end
+  
+  it "should also accept a version number for restoration" do
+    @message = Message.create(:title => "one")
+    
+    @message.update_attributes(:title => "two").should be_true
+    @message.update_attributes(:title => "three").should be_true
+    
+    @restored = @message.history.restore(0)
+    @restored.title.should == "one"
+    
+    @restored = @message.history.restore(1)
+    @restored.title.should == "two"
+    
+    @restored = @message.history.restore(2)
+    @restored.title.should == "three"
+  end
+  
+  it "should raise an exception for invalid version numbers" do
+    @message = Message.create(:title => "one")
+    @message.history.versions.count.should == 1
+    
+    lambda{ @message.history.restore(-1) }.should raise_exception
+    lambda{ @message.history.restore(1)  }.should raise_exception(ActiveRecord::RecordNotFound)
+  end
 end
