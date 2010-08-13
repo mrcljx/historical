@@ -23,20 +23,12 @@ module Historical::Models
     end
     
     def self.specialized_class_name(type)
-      ruby_type = case type.to_sym
-      when :datetime then "Time"
-      when :text then "String"
-      when :decimal then "Float"
-      when :timestamp then "Time"
-      else
-        type.classify
-      end
-      
+      ruby_type = Historical::ActiveRecord.sql_to_type(type)
       "#{ruby_type}#{simple_name}"
     end
     
     def self.simple_name
-      name.split('::').last || ''
+      name.to_s.demodulize
     end
   
     def old_value=(value)

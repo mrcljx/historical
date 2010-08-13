@@ -7,7 +7,7 @@ module Historical
     attr_reader :record
   
     def versions
-      Models::ModelVersion.where(:record_id => record.id, :record_type => record.class.name).sort(:created_at.asc, :id.asc)
+      Models::ModelVersion.where(:_record_id => record.id, :_record_type => record.class.name).sort(:created_at.asc, :id.asc)
     end
   
     def diffs

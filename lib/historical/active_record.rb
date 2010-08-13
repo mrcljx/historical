@@ -1,5 +1,16 @@
 module Historical
   module ActiveRecord
+    def self.sql_to_type(type)
+      case type.to_sym
+      when :datetime then "Time"
+      when :text then "String"
+      when :decimal then "Float"
+      when :timestamp then "Time"
+      else
+        type.to_s.classify
+      end
+    end
+    
     def is_historical
       class_eval do
         attr_accessor :historical_differences, :historical_creation
@@ -19,14 +30,15 @@ module Historical
         after_save do |record|
           next unless record.historical_creation or record.historical_differences
           
-          version = Historical::Models::ModelVersion.new.tap do |v|
-            v.record_id, v.record_type = record.id, record.class.name
+          
+          version = Historical::Models::ModelVersion.for_class(record.class).new.tap do |v|
+            v._record_id    = record.id
+            v._record_type  = record.class.name
             
             record.attribute_names.each do |attr_name|
               attr = attr_name.to_sym
-              next if Historical::Models::ModelDiff::IGNORED_ATTRIBUTES.include? attr
-              val = record[attr]
-              v[attr] = (val and val.class.respond_to?(:to_mongo)) ? val.class.to_mongo(val) : val
+              next if Historical::IGNORED_ATTRIBUTES.include? attr
+              v.send("#{attr}=", record[attr])
             end
             
             v.save!

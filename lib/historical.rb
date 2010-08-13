@@ -1,4 +1,6 @@
 module Historical
+  IGNORED_ATTRIBUTES = [:id, :created_at, :updated_at]
+  
   autoload :ModelHistory, "historical/model_history"
   autoload :ActiveRecord, "historical/active_record"
   

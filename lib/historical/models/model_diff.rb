@@ -1,8 +1,6 @@
 module Historical::Models
   class ModelDiff
     include MongoMapper::Document
-  
-    IGNORED_ATTRIBUTES = [:id, :created_at, :updated_at]
 
     validates_associated :changes
 
@@ -28,11 +26,11 @@ module Historical::Models
 
     def self.from_versions(from, to)
       return from_creation(to) if from.nil?
-
+      
       generate_from_version(from, 'update').tap do |d|
         from.record.attribute_names.each do |attr_name|
           attr = attr_name.to_sym
-          next if IGNORED_ATTRIBUTES.include? attr
+          next if Historical::IGNORED_ATTRIBUTES.include? attr
     
           old_value, new_value = from[attr], to[attr]
          
@@ -58,9 +56,10 @@ module Historical::Models
   
     def self.generate_from_version(version, type = 'creation')
       ModelDiff.new.tap do |d|
-        d.diff_type = type
-        d.type = "#{version.record_type}Diff"
-        d.record_id, d.record_type = version.record_id, version.record_type
+        d.type        = "#{version._record_type}Diff"
+        d.diff_type   = type
+        d.record_id   = version._record_id
+        d.record_type = version._record_type
       end
     end
   end
