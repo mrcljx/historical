@@ -182,7 +182,6 @@ describe "A historical model" do
   
   it "should also accept a version number for restoration" do
     @message = Message.create(:title => "one")
-    
     @message.update_attributes(:title => "two").should be_true
     @message.update_attributes(:title => "three").should be_true
     
@@ -202,5 +201,12 @@ describe "A historical model" do
     
     lambda{ @message.history.restore(-1) }.should raise_exception
     lambda{ @message.history.restore(1)  }.should raise_exception(ActiveRecord::RecordNotFound)
+  end
+  
+  it "should allow handy queryies for restoration" do
+    @message = Message.create(:title => "one")
+    @message.update_attributes(:title => "two").should be_true
+    
+    @message.history.restore(:original).title.should == "one"
   end
 end

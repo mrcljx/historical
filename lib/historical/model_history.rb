@@ -1,10 +1,12 @@
 module Historical
   class ModelHistory
+    attr_reader :record
+    
     def initialize(record)
       @record = record
+      @base_version = record.historical_version
+      #@base_version ||= versions.count - 1
     end
-  
-    attr_reader :record
   
     def versions
       Models::ModelVersion.where(:_record_id => record.id, :_record_type => record.class.name).sort(:created_at.asc, :id.asc)
@@ -12,6 +14,14 @@ module Historical
   
     def diffs
       Models::ModelDiff.where(:record_id => record.id, :record_type => record.class.name).sort(:created_at.asc, :id.asc)
+    end
+    
+    def previous_version
+      nil
+    end
+    
+    def next_version
+      nil
     end
   
     def latest_version
@@ -34,8 +44,19 @@ module Historical
       versions.skip(position).limit(1).first
     end
     
-    def restore(version)
-      version = find_version(version) if version.is_a? Numeric
+    def version_by_query(query)
+      case query
+      when Numeric                then find_version(query)
+      when Symbol                 then send(query)
+      when Models::ModelVersion   then query
+      else
+        nil
+      end
+    end
+    
+    def restore(version_query)
+      version = version_by_query(version_query)
+      
       raise ::ActiveRecord::RecordNotFound, "version does not exist" unless version
       
       record.clone.tap do |r|
@@ -49,6 +70,10 @@ module Historical
         r.readonly!
         r.clear_association_cache
       end
+    end
+    
+    %w(original latest previous next).each do |k|
+      alias_method k, "#{k}_version"
     end
   end
 end

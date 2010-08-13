@@ -13,7 +13,7 @@ module Historical
     
     def is_historical
       class_eval do
-        attr_accessor :historical_differences, :historical_creation
+        attr_accessor :historical_differences, :historical_creation, :historical_version
         
         # dirty attributes a removed after save, so we need to check it here
         before_update do |record|
