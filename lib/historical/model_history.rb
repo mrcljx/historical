@@ -5,23 +5,30 @@ module Historical
     def initialize(record)
       @record = record
       @base_version = record.historical_version
-      #@base_version ||= versions.count - 1
+      @base_version ||= -1 if record.new_record?
+      @base_version ||= versions.count - 1
     end
   
     def versions
-      Models::ModelVersion.where(:_record_id => record.id, :_record_type => record.class.name).sort(:created_at.asc, :id.asc)
+      Models::ModelVersion.for_record(record).sort(:created_at.asc, :id.asc)
     end
   
     def diffs
       Models::ModelDiff.where(:record_id => record.id, :record_type => record.class.name).sort(:created_at.asc, :id.asc)
     end
     
+    def own_version
+      own = versions.skip(@base_version).limit(1).first
+      raise "couldn't find myself (base_version: #{@base_version}, versions: #{versions.count})" unless own
+      own
+    end
+    
     def previous_version
-      nil
+      own_version.previous
     end
     
     def next_version
-      nil
+      own_version.next
     end
   
     def latest_version
@@ -60,6 +67,8 @@ module Historical
       raise ::ActiveRecord::RecordNotFound, "version does not exist" unless version
       
       record.clone.tap do |r|
+        r.id = record.id
+        
         r.class.columns.each do |c|
           attr = c.name.to_sym
           next if Historical::IGNORED_ATTRIBUTES.include? attr
@@ -67,10 +76,18 @@ module Historical
           r[attr] = version.send(attr)
         end
         
-        r.readonly!
+        r.historical_version = version.version_index
         r.clear_association_cache
       end
     end
+    
+    def restore_with_protection(*args)
+      restore_without_protection(*args).tap do |r|
+        r.readonly!
+      end
+    end
+    
+    alias_method_chain :restore, :protection
     
     %w(original latest previous next).each do |k|
       alias_method k, "#{k}_version"

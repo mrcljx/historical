@@ -105,6 +105,7 @@ describe "A historical model" do
         @msg.history.tap do |h|
           h.versions.count.should         == 2
           h.original_version.title.should == @first_title
+          h.previous.title.should         == @first_title
           h.latest_version.title.should   == @new_title
         end
       end
@@ -208,5 +209,34 @@ describe "A historical model" do
     @message.update_attributes(:title => "two").should be_true
     
     @message.history.restore(:original).title.should == "one"
+  end
+  
+  it "should find version-neighbors" do
+    @message = Message.create(:title => "one")
+    @message.update_attributes(:title => "two").should be_true
+    @message.update_attributes(:title => "three").should be_true
+    
+    mid = @message.history.versions.skip(1).limit(1).first
+    mid.title.should == "two"
+    
+    mid.previous_versions.count.should  == 1
+    mid.next_versions.count.should      == 1
+    mid.previous.should                 == @message.history.versions.skip(0).limit(1).first
+    mid.next.should                     == @message.history.versions.skip(2).limit(1).first
+  end
+  
+  it "should not break handy queries for chained restorations" do
+    @message = Message.create(:title => "one")
+    @message.update_attributes(:title => "two").should be_true
+    @message.history.own_version.version_index.should == 1
+    
+    previous = @message.history.restore(:previous)
+    previous.history.own_version.version_index.should == 0
+    
+    identity = previous.history.restore(:next)
+    identity.history.own_version.version_index.should == 1
+    
+    identity.should_not     be_nil
+    identity.title.should   == "two"
   end
 end

@@ -21,12 +21,24 @@ module Historical::Models
       _record_type.constantize
     end
   
+    def previous_versions
+      self.class.for_record(_record_id, _record_type).where(:created_at.lte => created_at, :_id.lt => _id).sort(:created_at.desc)
+    end
+  
     def previous
-      self.class.for_record(_record_id, _record_type).where(:created_at.lte => created_at, :_id.ne => id).sort(:created_at.desc).first
+      previous_versions.first
+    end
+  
+    def next_versions
+      self.class.for_record(_record_id, _record_type).where(:created_at.gte => created_at, :_id.gt => _id).sort(:created_at.asc)
     end
   
     def next
-      self.class.for_record(_record_id, _record_type).where(:created_at.gte => created_at, :_id.ne => id).sort(:created_at.asc).first
+      next_versions.first
+    end
+    
+    def version_index
+      previous_versions.count
     end
     
     def self.for_record(record_or_id, type = nil)
