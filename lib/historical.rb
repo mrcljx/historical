@@ -12,9 +12,17 @@ module Historical
       def self.pooled(name)
         @@class_pool ||= {}
         return @@class_pool[name] if @@class_pool[name]
-        cls = yield          
+        
+        cls = yield
+        
         Historical::Models::Pool::const_set(name, cls)
         @@class_pool[name] = cls
+        
+        cls
+      end
+      
+      def self.pooled_name(specialized_for, parent)
+        "#{specialized_for.name.demodulize}#{parent.name.demodulize}"
       end
     end
     

@@ -11,8 +11,9 @@ module Historical
       end
     end
     
-    def is_historical
+    def is_historical(&block)
       class_eval do
+        cattr_accessor :historical_customizations, :historical_installed
         attr_accessor :historical_differences, :historical_creation, :historical_version
         
         # dirty attributes a removed after save, so we need to check it here
@@ -51,6 +52,10 @@ module Historical
           @history ||= Historical::ModelHistory.new(self)
         end
       end
+      
+      self.historical_installed         = true
+      self.historical_customizations    ||= []
+      self.historical_customizations    << block if block_given?
     end
   end
 end

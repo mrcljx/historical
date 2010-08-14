@@ -2,6 +2,7 @@ module Historical::Models
   class ModelDiff
     include MongoMapper::Document
     extend Historical::MongoMapperEnhancements
+    class_inheritable_accessor :historical_callbacks
 
     validates_associated :changes
 
@@ -20,10 +21,6 @@ module Historical::Models
   
     def old_version
       new_version.previous
-    end
-    
-    def record
-      record_type.constantize.find(record_id)
     end
 
     def self.from_versions(from, to)
@@ -53,18 +50,46 @@ module Historical::Models
     def self.from_creation(to)
       generate_from_version(to).save!
     end
+    
+    before_validation_on_create do |r|
+      if cbs = r.class.historical_callbacks
+        cbs.each do |c|
+          c.call(r)
+        end
+      end
+      
+      true
+    end
   
     protected
     
     def diff_type_inquirer
       ActiveSupport::StringInquirer.new(diff_type)
     end
+    
+    def self.historical_callback(&block)
+      raise "no block given" unless block_given?
+
+      self.historical_callbacks ||= []
+      self.historical_callbacks << block
+    end
+    
   
     def self.generate_from_version(version, type = 'creation')
-      ModelDiff.new.tap do |d|
+      for_class(version.record.class).new.tap do |d|
         d.diff_type   = type
         d.record_id   = version._record_id
         d.record_type = version._record_type
+      end
+    end
+    
+    def self.for_class(source_class)
+      Historical::Models::Pool.pooled(Historical::Models::Pool.pooled_name(source_class, self)) do
+        Class.new(self).tap do |cls|
+          source_class.historical_customizations.each do |customization|
+            cls.instance_eval(&customization)
+          end
+        end
       end
     end
   end

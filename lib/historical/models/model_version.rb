@@ -48,9 +48,7 @@ module Historical::Models
     end
     
     def self.for_class(source_class)
-      name = "#{source_class.name.demodulize}#{self.name.demodulize}"
-      
-      Historical::Models::Pool.pooled(name) do
+      Historical::Models::Pool.pooled(Historical::Models::Pool.pooled_name(source_class, self)) do
         Class.new(self).tap do |cls|
           source_class.columns.each do |col|
             next if Historical::IGNORED_ATTRIBUTES.include? col.name.to_sym

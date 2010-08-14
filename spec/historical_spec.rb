@@ -254,16 +254,33 @@ describe "A historical model" do
 
       extend Historical::ActiveRecord
       is_historical do
-        belongs_to_active_record :author, :required => true
+        belongs_to_active_record :author, :required => true, :class_name => "User"
 
-        before_create do |diff|
+        historical_callback do |diff|
           diff.author = AuditedMessage.current_user
         end
       end
     end
     
+    before :each do
+      AuditedMessage.current_user = nil
+    end
+    
     it "should create custom keys on ModelDiffs" do
+      user = User.create(:name => "Jane Doe")
+      AuditedMessage.current_user = user
+      
       msg = AuditedMessage.create(:title => "one")
+      
+      msg.history.diffs.first.author.should == user
+    end
+    
+    it "should validate requirements" do
+      # no author is set
+      
+      lambda do
+        AuditedMessage.create(:title => "one")
+      end.should raise_exception(MongoMapper::DocumentNotValid)
     end
   end
 end

@@ -23,14 +23,14 @@ module Historical
         id    = send(ar_id_field)
         
         type_class = polymorphic ? send(ar_type_field).constantize : model_class
-        type.constantize.find(id)
+        type_class.find(id)
       end
       
       define_method "#{name}=" do |val|
         id = type = nil
         
         if val
-          raise "expected an instace of ActiveRecord::Base, got: #{val.class.name}" unless val.is?(ActiveRecord::Base)
+          raise "expected an instace of ActiveRecord::Base, got: #{val.class.name}" unless val.is_a?(::ActiveRecord::Base)
           type  = val.class.name
           id    = val.id
         end
