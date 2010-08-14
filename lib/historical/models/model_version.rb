@@ -10,14 +10,8 @@ module Historical::Models
     timestamps!
   
     one :diff, :class_name => "Historical::Models::ModelDiff"
-
-    def record
-      record_class.find(_record_id)
-    end
     
-    def record_class
-      _record_type.constantize
-    end
+    alias_method :record, :_record
   
     def previous_versions
       self.class.for_record(_record_id, _record_type).where(:created_at.lte => created_at, :_id.lt => _id).sort(:created_at.desc)

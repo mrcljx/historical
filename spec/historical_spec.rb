@@ -275,7 +275,9 @@ describe "A historical model" do
       
       msg = AuditedMessage.create(:title => "one")
       
-      msg.history.diffs.first.author.should == user
+      author = msg.history.diffs.first.author
+      author.should == user
+      author.id.should == user.id
     end
     
     it "should validate requirements" do

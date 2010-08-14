@@ -10,9 +10,9 @@ module Historical
       
       unless polymorphic
         if class_name
-          model_class = class_name.is_a?(Class) ? class_name : class_name.constantize
+          model_class = class_name.is_a?(Class) ? class_name.name : class_name.classify
         else
-          model_class = name.to_s.classify.constantize
+          model_class = name.to_s.classify
         end
       end
       
@@ -22,7 +22,7 @@ module Historical
       define_method name do
         id    = send(ar_id_field)
         
-        type_class = polymorphic ? send(ar_type_field).constantize : model_class
+        type_class = polymorphic ? send(ar_type_field).constantize : model_class.constantize
         type_class.find(id)
       end
       
