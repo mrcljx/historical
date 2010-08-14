@@ -1,14 +1,15 @@
 module Historical::Models
   class ModelDiff
     include MongoMapper::Document
+    extend Historical::MongoMapperEnhancements
 
     validates_associated :changes
 
-    key :record_id,   Integer,  :required => true
-    key :record_type, String,   :required => true
+    key :_type,       String
+
+    belongs_to_active_record :record, :polymorphic => true, :required => true
   
     key :diff_type,   String,   :required => true
-    key :type,        String
   
     timestamps!
 
@@ -61,7 +62,6 @@ module Historical::Models
   
     def self.generate_from_version(version, type = 'creation')
       ModelDiff.new.tap do |d|
-        d.type        = "#{version._record_type}Diff"
         d.diff_type   = type
         d.record_id   = version._record_id
         d.record_type = version._record_type

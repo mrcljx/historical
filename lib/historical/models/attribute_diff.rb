@@ -1,6 +1,7 @@
 module Historical::Models
   class AttributeDiff
     include MongoMapper::EmbeddedDocument
+    extend Historical::MongoMapperEnhancements
   
     key :_type,           String
     

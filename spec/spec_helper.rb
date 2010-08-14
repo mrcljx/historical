@@ -29,6 +29,12 @@ ActiveRecord::Base.silence do
       t.date      :stamped_on
       t.decimal   :donated,       :precision => 10, :scale => 2
       t.boolean   :read,          :null => false, :default => false
+      t.timestamps
+    end
+    
+    create_table :users do |t|
+      t.string :name
+      t.timestamps
     end
   end
 end

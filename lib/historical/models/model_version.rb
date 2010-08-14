@@ -1,14 +1,12 @@
-module Historical::Models
-  module Pool
-    # cached classes are stored here
-  end
-  
+module Historical::Models  
   class ModelVersion
     include MongoMapper::Document
+    extend Historical::MongoMapperEnhancements
 
     key :_type,           String
-    key :_record_id,      Integer,  :required => true
-    key :_record_type,    String,   :required => true
+    
+    belongs_to_active_record :_record, :polymorphic => true, :required => true
+    
     timestamps!
   
     one :diff, :class_name => "Historical::Models::ModelDiff"
@@ -50,23 +48,17 @@ module Historical::Models
     end
     
     def self.for_class(source_class)
-      @@class_pool ||= {}
-      return @@class_pool[source_class] if @@class_pool[source_class]
+      name = "#{source_class.name.demodulize}#{self.name.demodulize}"
       
-      Class.new(ModelVersion).tap do |cls|
-        source_class.columns.each do |col|
-          next if Historical::IGNORED_ATTRIBUTES.include? col.name.to_sym
-          type = Historical::ActiveRecord.sql_to_type(col.type)
-          cls.send :key, col.name, type.constantize
+      Historical::Models::Pool.pooled(name) do
+        Class.new(self).tap do |cls|
+          source_class.columns.each do |col|
+            next if Historical::IGNORED_ATTRIBUTES.include? col.name.to_sym
+            type = Historical::ActiveRecord.sql_to_type(col.type)
+            cls.send :key, col.name, type.constantize
+          end
         end
-        
-        Historical::Models::Pool::const_set(pooled_class_name(source_class), cls)
-        @@class_pool[source_class] = cls
       end
-    end
-    
-    def self.pooled_class_name(source_class)
-      "#{source_class.name.demodulize}#{self.name.demodulize}"
     end
   end
 end

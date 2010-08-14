@@ -1,6 +1,10 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe "A historical model" do
+  class User < ActiveRecord::Base
+    set_table_name "users"
+  end
+  
   class Message < ActiveRecord::Base
     extend Historical::ActiveRecord
     is_historical
@@ -240,5 +244,26 @@ describe "A historical model" do
     
     identity.should_not     be_nil
     identity.title.should   == "two"
+  end
+  
+  context "with customization" do
+    class AuditedMessage < ActiveRecord::Base
+      set_table_name "messages"
+      
+      cattr_accessor :current_user
+
+      extend Historical::ActiveRecord
+      is_historical do
+        belongs_to_active_record :author, :required => true
+
+        before_create do |diff|
+          diff.author = AuditedMessage.current_user
+        end
+      end
+    end
+    
+    it "should create custom keys on ModelDiffs" do
+      msg = AuditedMessage.create(:title => "one")
+    end
   end
 end
