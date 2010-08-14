@@ -12,14 +12,15 @@ module Historical::Models
   
     timestamps!
 
-    belongs_to :new_version, :class_name => "Historical::Models::ModelVersion", :required => true
+    belongs_to  :new_version,   :class_name => "Historical::Models::ModelVersion", :required => true
+    many        :changes,       :class_name => "Historical::Models::AttributeDiff"
+    
+    delegate :creation?, :update?, :to => :diff_type_inquirer
   
     def old_version
       new_version.previous
     end
-  
-    many :changes, :class_name => "Historical::Models::AttributeDiff"
-
+    
     def record
       record_type.constantize.find(record_id)
     end
@@ -53,6 +54,10 @@ module Historical::Models
     end
   
     protected
+    
+    def diff_type_inquirer
+      ActiveSupport::StringInquirer.new(diff_type)
+    end
   
     def self.generate_from_version(version, type = 'creation')
       ModelDiff.new.tap do |d|

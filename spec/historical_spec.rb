@@ -22,6 +22,7 @@ describe "A historical model" do
         
         h.creation.should_not     be_nil
         h.creation.diff_type.should == "creation"
+        h.creation.should         be_creation
       end
     end
   end
@@ -114,6 +115,7 @@ describe "A historical model" do
         @msg.history.tap do |h|
           h.updates.count.should            == 1
           h.updates.first.diff_type.should  == "update"
+          h.updates.first.should            be_update
         
           h.creation.should       == h.diffs.first
           h.updates.first.should  == h.diffs.last
