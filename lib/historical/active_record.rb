@@ -51,6 +51,10 @@ module Historical
         def history
           @history ||= Historical::ModelHistory.new(self)
         end
+        
+        def version
+          historical_version || history.own_version.version_index
+        end
       end
       
       self.historical_installed         = true

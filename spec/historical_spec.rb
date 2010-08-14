@@ -235,12 +235,15 @@ describe "A historical model" do
     @message = Message.create(:title => "one")
     @message.update_attributes(:title => "two").should be_true
     @message.history.own_version.version_index.should == 1
+    @message.version.should == 1
     
     previous = @message.history.restore(:previous)
     previous.history.own_version.version_index.should == 0
+    previous.version.should == 0
     
     identity = previous.history.restore(:next)
     identity.history.own_version.version_index.should == 1
+    identity.version.should == 1
     
     identity.should_not     be_nil
     identity.title.should   == "two"
