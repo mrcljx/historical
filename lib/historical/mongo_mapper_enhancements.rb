@@ -20,10 +20,16 @@ module Historical
       key ar_type_field,  String,   options if polymorphic
       
       define_method name do
-        id    = send(ar_id_field)
-        
-        type_class = polymorphic ? send(ar_type_field).constantize : model_class.constantize
-        type_class.find(id)
+        if id = send(ar_id_field)
+          if polymorphic
+            type_class = send(ar_type_field)
+            type_class ? type_class.constantize.find(id) : nil
+          else
+            model_class.constantize.find(id)
+          end
+        else
+          nil
+        end
       end
       
       define_method "#{name}=" do |val|

@@ -12,10 +12,6 @@ module Historical
     def versions
       Models::ModelVersion.for_record(record).sort(:created_at.asc, :id.asc)
     end
-  
-    def diffs
-      Models::ModelDiff.where(:record_id => record.id, :record_type => record.class.name).sort(:created_at.asc, :id.asc)
-    end
     
     def own_version
       own = versions.skip(@base_version).limit(1).first
@@ -40,11 +36,11 @@ module Historical
     end
   
     def creation
-      diffs.where(:diff_type => "creation").first
+      versions.where("diff.diff_type" => "creation").first
     end
   
     def updates
-      diffs.where(:diff_type => "update")
+      versions.where("diff.diff_type" => "update")
     end
     
     def find_version(position)

@@ -21,12 +21,11 @@ describe "A historical model" do
       
       msg.history.tap do |h|
         h.versions.count.should   be(1)
-        h.diffs.count.should      be(1)
         h.updates.should          be_empty
         
-        h.creation.should_not     be_nil
-        h.creation.diff_type.should == "creation"
-        h.creation.should         be_creation
+        h.creation.should_not             be_nil
+        h.creation.diff.diff_type.should  == "creation"
+        h.creation.diff.should            be_creation
       end
     end
   end
@@ -40,13 +39,10 @@ describe "A historical model" do
     
     it "should not create new versions" do
       version_count = lambda { @msg.history.versions.count }
-      diff_count    = lambda { @msg.history.diffs.count }
-    
-      lambda do 
-        lambda do
-          @msg.save!
-        end.should_not change(version_count, :call)
-      end.should_not change(diff_count, :call)
+  
+      lambda do
+        @msg.save!
+      end.should_not change(version_count, :call)
     end
   end
   
@@ -54,7 +50,7 @@ describe "A historical model" do
     it "should keep the correct value-types" do
       m = Message.create
       
-      time = Time.now
+      time = Time.now.utc
       date = Date.today.advance(:days => 5)
       
       m.title = "Hello there!"
@@ -67,8 +63,7 @@ describe "A historical model" do
       m.save!
       
       m.history.updates.count.should == 1
-      change = m.history.updates.last
-      change.reload
+      change = m.history.updates.last.diff
       changes = change.changes
       grouped = {}
       
@@ -76,25 +71,25 @@ describe "A historical model" do
         grouped[c.attribute.to_sym] = c
       end
       
-      grouped[:title].new_value == "Hello there!"
-      grouped[:title].old_value == nil
+      grouped[:title].new_value.should == "Hello there!"
+      grouped[:title].old_value.should == nil
       
-      grouped[:body].new_value == "I am no spambot."
-      grouped[:body].old_value == nil
+      grouped[:body].new_value.should == "I am no spambot."
+      grouped[:body].old_value.should == nil
       
-      grouped[:votes].new_value == 42
-      grouped[:votes].old_value == nil
+      grouped[:votes].new_value.should == 42
+      grouped[:votes].old_value.should == nil
       
-      grouped[:read].new_value == true
-      grouped[:read].old_value == false
+      grouped[:read].new_value.should == true
+      grouped[:read].old_value.should == false
       
       grouped[:published_at].new_value.class.should == Time
-      grouped[:published_at].new_value == time
-      grouped[:published_at].old_value == nil
+      grouped[:published_at].new_value.should == Time.utc(time.year, time.month, time.day, time.hour, time.min, time.sec)
+      grouped[:published_at].old_value.should == nil
       
       grouped[:stamped_on].new_value.class.should == Date
-      grouped[:stamped_on].new_value == date
-      grouped[:stamped_on].old_value == nil
+      grouped[:stamped_on].new_value.should == date
+      grouped[:stamped_on].old_value.should == nil
     end
     
     context "on a single field" do
@@ -117,18 +112,18 @@ describe "A historical model" do
     
       it "should create an update-diff" do
         @msg.history.tap do |h|
-          h.updates.count.should            == 1
-          h.updates.first.diff_type.should  == "update"
-          h.updates.first.should            be_update
+          h.updates.count.should                == 1
+          h.updates.first.diff.diff_type.should == "update"
+          h.updates.first.diff.should           be_update
         
-          h.creation.should       == h.diffs.first
-          h.updates.first.should  == h.diffs.last
+          h.creation.diff.should       == h.versions.first.diff
+          h.updates.first.diff.should  == h.versions.last.diff
         end
       end
     
       it "should create attribute-diffs in update-diff" do
         @msg.history.tap do |h|
-          model_diff = h.updates.first
+          model_diff = h.updates.first.diff
           model_diff.changes.count.should == 1
   
           model_diff.changes.first.tap do |diff|  
@@ -148,8 +143,11 @@ describe "A historical model" do
         @msg.read = true
         @msg.save!
         
+        @msg.history.versions.count.should == 2
+        @msg.history.updates.count.should == 1
+        
         @msg.history.tap do |h|
-          changes = h.updates.first.changes
+          changes = h.updates.first.diff.changes
           changes.count.should == 2
   
           attributes_changed = changes.collect do |change|
@@ -275,7 +273,7 @@ describe "A historical model" do
       
       msg = AuditedMessage.create(:title => "one")
       
-      author = msg.history.diffs.first.author
+      author = msg.history.versions.first.diff.author
       author.should == user
       author.id.should == user.id
     end

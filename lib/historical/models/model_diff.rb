@@ -1,6 +1,6 @@
 module Historical::Models
   class ModelDiff
-    include MongoMapper::Document
+    include MongoMapper::EmbeddedDocument
     extend Historical::MongoMapperEnhancements
     class_inheritable_accessor :historical_callbacks
 
@@ -11,13 +11,14 @@ module Historical::Models
     belongs_to_active_record :record, :polymorphic => true, :required => true
   
     key :diff_type,   String,   :required => true
-  
-    timestamps!
 
-    belongs_to  :new_version,   :class_name => "Historical::Models::ModelVersion", :required => true
     many        :changes,       :class_name => "Historical::Models::AttributeDiff"
     
     delegate :creation?, :update?, :to => :diff_type_inquirer
+  
+    def new_version
+      _parent_document
+    end
   
     def old_version
       new_version.previous
@@ -42,13 +43,11 @@ module Historical::Models
             d.changes << ad
           end if old_value != new_value
         end
-      
-        d.save!
       end
     end
 
     def self.from_creation(to)
-      generate_from_version(to).save!
+      generate_from_version(to)
     end
     
     before_validation_on_create do |r|
