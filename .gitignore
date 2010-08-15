@@ -2,3 +2,4 @@
 *.db
 *.log
 previous_failures.txt
+pkg
