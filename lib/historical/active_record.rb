@@ -61,6 +61,10 @@ module Historical
       self.historical_installed         = true
       self.historical_customizations    ||= []
       self.historical_customizations    << block if block_given?
+      
+      # generate pooled classes
+      Historical::Models::ModelDiff.for_class(self)
+      Historical::Models::ModelVersion.for_class(self)
     end
   end
 end
