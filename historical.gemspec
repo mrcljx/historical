@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Marcel Jackwerth"]
-  s.date = %q{2010-08-14}
+  s.date = %q{2010-08-15}
   s.description = %q{Rewrite of the original historical-plugin using MongoDB}
   s.email = %q{marcel@northdocks.com}
   s.extra_rdoc_files = [
@@ -22,12 +22,15 @@ Gem::Specification.new do |s|
      "README.rdoc",
      "Rakefile",
      "VERSION",
+     "historical.gemspec",
      "lib/historical.rb",
      "lib/historical/active_record.rb",
      "lib/historical/model_history.rb",
      "lib/historical/models/attribute_diff.rb",
      "lib/historical/models/model_diff.rb",
      "lib/historical/models/model_version.rb",
+     "lib/historical/mongo_mapper_enhancements.rb",
+     "rails/init.rb",
      "spec/historical_spec.rb",
      "spec/spec.opts",
      "spec/spec_helper.rb"
