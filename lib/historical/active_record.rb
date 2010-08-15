@@ -31,7 +31,7 @@ module Historical
         after_save do |record|
           next unless record.historical_creation or record.historical_differences
           
-          version = Historical::Models::ModelVersion.for_class(record.class).new.tap do |v|
+          Historical::Models::ModelVersion.for_class(record.class).new.tap do |v|
             v._record_id    = record.id
             v._record_type  = record.class.name
             
@@ -41,12 +41,9 @@ module Historical
               v.send("#{attr}=", record[attr])
             end
             
+            v.diff = Historical::Models::ModelDiff.from_versions(v.previous, v)
             v.save!
           end
-          
-          diff = Historical::Models::ModelDiff.from_versions(version.previous, version)
-          version.diff = diff
-          version.save!
         end
         
         def history

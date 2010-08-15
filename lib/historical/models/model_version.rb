@@ -15,8 +15,12 @@ module Historical::Models
     
     alias_method :record, :_record
   
+    def siblings
+      self.class.for_record(_record_id, _record_type)
+    end
+  
     def previous_versions
-      self.class.for_record(_record_id, _record_type).where(:created_at.lte => created_at, :_id.lt => _id).sort(:created_at.desc)
+      (new? ? siblings : siblings.where(:created_at.lte => created_at, :_id.lt => _id)).sort(:created_at.desc)
     end
   
     def previous
@@ -24,7 +28,7 @@ module Historical::Models
     end
   
     def next_versions
-      self.class.for_record(_record_id, _record_type).where(:created_at.gte => created_at, :_id.gt => _id).sort(:created_at.asc)
+      siblings.where(:created_at.gte => created_at, :_id.gt => _id).sort(:created_at.asc)
     end
   
     def next
