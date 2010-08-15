@@ -2,6 +2,8 @@ module Historical::Models
   class ModelVersion
     include MongoMapper::Document
     extend Historical::MongoMapperEnhancements
+    
+    validate :validate_diff
 
     key :_type,           String
     
@@ -50,6 +52,14 @@ module Historical::Models
             cls.send :key, col.name, type.constantize
           end
         end
+      end
+    end
+    
+    protected
+    
+    def validate_diff
+      if diff.present? and !diff.valid?
+        errors.add(:diff, "not valid")
       end
     end
   end

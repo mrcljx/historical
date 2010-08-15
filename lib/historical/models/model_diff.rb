@@ -6,18 +6,18 @@ module Historical::Models
 
     validates_associated :changes
 
-    key :_type,       String
-
-    belongs_to_active_record :record, :polymorphic => true, :required => true
-  
-    key :diff_type,   String,   :required => true
-
-    many        :changes,       :class_name => "Historical::Models::AttributeDiff"
+    key   :_type,       String
+    key   :diff_type,   String,   :required => true
+    many  :changes,     :class_name => "Historical::Models::AttributeDiff"
     
     delegate :creation?, :update?, :to => :diff_type_inquirer
   
+    def record
+      new_version.record
+    end
+  
     def new_version
-      _parent_document
+      @parent || _parent_document
     end
   
     def old_version
@@ -49,16 +49,6 @@ module Historical::Models
     def self.from_creation(to)
       generate_from_version(to)
     end
-    
-    before_validation_on_create do |r|
-      if cbs = r.class.historical_callbacks
-        cbs.each do |c|
-          c.call(r)
-        end
-      end
-      
-      true
-    end
   
     protected
     
@@ -77,8 +67,13 @@ module Historical::Models
     def self.generate_from_version(version, type = 'creation')
       for_class(version.record.class).new.tap do |d|
         d.diff_type   = type
-        d.record_id   = version._record_id
-        d.record_type = version._record_type
+        d.instance_variable_set :@parent, version
+        
+        if cbs = d.class.historical_callbacks
+          cbs.each do |c|
+            c.call(d)
+          end
+        end
       end
     end
     
