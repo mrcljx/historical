@@ -1,3 +1,5 @@
+require 'historical/railtie' if defined?(Rails::Railtie)
+
 module Historical
   IGNORED_ATTRIBUTES = [:id, :created_at, :updated_at]
   
