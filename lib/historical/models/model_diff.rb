@@ -24,8 +24,8 @@ module Historical::Models
       new_version.previous
     end
 
-    def self.from_versions(from, to, update = nil)
-      return from_creation(to) if !from and !update
+    def self.from_versions(from, to)
+      return from_creation(to) if !from
       
       generate_from_version(from, 'update').tap do |d|
         from.record.attribute_names.each do |attr_name|

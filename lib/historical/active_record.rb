@@ -65,7 +65,8 @@ module Historical
               v.send("#{attr}=", self[attr])
             end
             
-            v.diff = Historical::Models::ModelDiff.from_versions(v.previous, v, mode != :create)
+            previous = (mode != :create ? v.previous : nil)
+            v.diff = Historical::Models::ModelDiff.from_versions(previous, v)
             v.save!
           end
         end
