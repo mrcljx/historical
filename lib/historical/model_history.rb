@@ -13,7 +13,7 @@ module Historical
         version_count = versions.count
         
         if version_count.zero?
-          raise "x"
+          spawn_creation!
           version_count = 1
         end
         
@@ -23,6 +23,7 @@ module Historical
     
     def destroy
       versions.remove
+      record.history = nil if record.history == self
     end
   
     def versions
@@ -106,6 +107,15 @@ module Historical
     
     %w(original latest previous next).each do |k|
       alias_method k, "#{k}_version"
+    end
+    
+    protected
+    
+    def spawn_creation!
+      record.send(:spawn_version, :create).tap do |e|
+        e.created_at = record.created_at
+        e.save!
+      end
     end
   end
 end

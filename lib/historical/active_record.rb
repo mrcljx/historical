@@ -52,7 +52,9 @@ module Historical
           historical_creation or historical_differences
         end
         
-        def spawn_version
+        def spawn_version(mode = :update)
+          mode = :create if historical_creation
+          
           Historical::Models::ModelVersion.for_class(self.class).new.tap do |v|
             v._record_id    = id
             v._record_type  = self.class.name
@@ -63,7 +65,7 @@ module Historical
               v.send("#{attr}=", self[attr])
             end
             
-            v.diff = Historical::Models::ModelDiff.from_versions(v.previous, v, !historical_creation)
+            v.diff = Historical::Models::ModelDiff.from_versions(v.previous, v, mode != :create)
             v.save!
           end
         end

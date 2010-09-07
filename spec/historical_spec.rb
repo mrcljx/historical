@@ -14,12 +14,26 @@ describe "A historical model" do
     before :each do
       @msg = Message.find(1)
       @msg.history.destroy
+    end
+    
+    it "should call the creation-generator" do
+      o = Object.new
+      o.stub!(:created_at=).once.with(@msg.created_at)
+      o.stub!(:save!).once
       
-      @msg.reload
+      @msg.should_receive(:spawn_version).once.with(:create).and_return(o)
+      @msg.history
     end
     
     it "should auto-generate a creation" do
+      @msg.history.version_index.should == 0
       @msg.history.creation.should_not be_nil
+    end
+    
+    it "should have the original timestamps" do
+      @msg.history.creation.tap do |e|
+        e.created_at.should == @msg.created_at
+      end
     end
   end
   
@@ -56,7 +70,6 @@ describe "A historical model" do
       lambda do
         @msg.should_not be_new_record
         @msg.changes.should be_empty
-        #debugger
         @msg.save!
       end.should_not change(version_count, :call)
     end
