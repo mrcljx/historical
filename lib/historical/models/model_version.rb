@@ -20,7 +20,7 @@ module Historical::Models
     end
   
     def previous_versions
-      (new? ? siblings : siblings.where(:created_at.lte => created_at, :_id.lt => _id)).sort(:created_at.desc)
+      (new? ? siblings : siblings.where(:created_at.lte => created_at, :_id.lt => _id)).sort(:created_at.desc, :id.desc)
     end
   
     def previous
@@ -28,7 +28,7 @@ module Historical::Models
     end
   
     def next_versions
-      siblings.where(:created_at.gte => created_at, :_id.gt => _id).sort(:created_at.asc)
+      siblings.where(:created_at.gte => created_at, :_id.gt => _id).sort(:created_at.asc, :id.asc)
     end
   
     def next

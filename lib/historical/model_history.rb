@@ -4,19 +4,37 @@ module Historical
     
     def initialize(record)
       @record = record
-      @base_version = record.historical_version
-      @base_version ||= -1 if record.new_record?
-      @base_version ||= versions.count - 1
+      
+      if record.historical_version
+        @base_version = record.historical_version
+      elsif record.new_record?
+        @base_version = -1
+      else
+        version_count = versions.count
+        
+        if version_count.zero?
+          raise "x"
+          version_count = 1
+        end
+        
+        @base_version = version_count - 1
+      end
+    end
+    
+    def destroy
+      versions.remove
     end
   
     def versions
       Models::ModelVersion.for_record(record).sort(:created_at.asc, :id.asc)
     end
     
+    delegate :version_index, :to => :own_version
+    
     def own_version
-      own = versions.skip(@base_version).limit(1).first
-      raise "couldn't find myself (base_version: #{@base_version}, versions: #{versions.count})" unless own
-      own
+      versions.skip(@base_version).limit(1).first.tap do |own|
+        raise "couldn't find myself (base_version: #{@base_version}, versions: #{versions.count})" unless own
+      end
     end
     
     def previous_version
@@ -74,6 +92,7 @@ module Historical
         
         r.historical_version = version.version_index
         r.clear_association_cache
+        r.history = nil
       end
     end
     

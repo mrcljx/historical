@@ -10,6 +10,19 @@ describe "A historical model" do
     is_historical
   end
   
+  context "when loading model from database without history" do
+    before :each do
+      @msg = Message.find(1)
+      @msg.history.destroy
+      
+      @msg.reload
+    end
+    
+    it "should auto-generate a creation" do
+      @msg.history.creation.should_not be_nil
+    end
+  end
+  
   context "when created" do
     it "should persist" do
       msg = Message.new(:title => "Hello")
@@ -41,6 +54,9 @@ describe "A historical model" do
       version_count = lambda { @msg.history.versions.count }
   
       lambda do
+        @msg.should_not be_new_record
+        @msg.changes.should be_empty
+        #debugger
         @msg.save!
       end.should_not change(version_count, :call)
     end
@@ -78,7 +94,7 @@ describe "A historical model" do
       grouped[:body].old_value.should == nil
       
       grouped[:votes].new_value.should == 42
-      grouped[:votes].old_value.should == nil
+      grouped[:votes].old_value.should == 0
       
       grouped[:read].new_value.should == true
       grouped[:read].old_value.should == false
@@ -232,15 +248,15 @@ describe "A historical model" do
   it "should not break handy queries for chained restorations" do
     @message = Message.create(:title => "one")
     @message.update_attributes(:title => "two").should be_true
-    @message.history.own_version.version_index.should == 1
+    @message.history.version_index.should == 1
     @message.version.should == 1
     
     previous = @message.history.restore(:previous)
-    previous.history.own_version.version_index.should == 0
+    previous.history.version_index.should == 0
     previous.version.should == 0
     
     identity = previous.history.restore(:next)
-    identity.history.own_version.version_index.should == 1
+    identity.history.version_index.should == 1
     identity.version.should == 1
     
     identity.should_not     be_nil

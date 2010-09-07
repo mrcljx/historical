@@ -16,35 +16,11 @@ module Historical
         cattr_accessor :historical_customizations, :historical_installed
         attr_accessor :historical_differences, :historical_creation, :historical_version
         
-        # dirty attributes a removed after save, so we need to check it here
-        before_update do |record|
-          record.historical_differences = !record.changes.empty?
-          true
-        end
+        before_save :detect_version_spawn
+        after_save :invalidate_history
+        after_save :spawn_version, :if => :spawn_version?
         
-        # new_record flag is removed after save, so we need to check it here
-        before_save do |record|
-          record.historical_creation = record.new_record?
-          true
-        end
-        
-        after_save do |record|
-          next unless record.historical_creation or record.historical_differences
-          
-          Historical::Models::ModelVersion.for_class(record.class).new.tap do |v|
-            v._record_id    = record.id
-            v._record_type  = record.class.name
-            
-            record.attribute_names.each do |attr_name|
-              attr = attr_name.to_sym
-              next if Historical::IGNORED_ATTRIBUTES.include? attr
-              v.send("#{attr}=", record[attr])
-            end
-            
-            v.diff = Historical::Models::ModelDiff.from_versions(v.previous, v)
-            v.save!
-          end
-        end
+        attr_writer :history
         
         def history
           @history ||= Historical::ModelHistory.new(self)
@@ -52,6 +28,44 @@ module Historical
         
         def version
           historical_version || history.own_version.version_index
+        end
+        
+        protected
+        
+        def detect_version_spawn
+          if new_record?
+            self.historical_creation = true
+            self.historical_differences = []
+          else
+            self.historical_creation = false
+            self.historical_differences = (changes.empty? ? nil : changes)
+          end
+          
+          true
+        end
+        
+        def invalidate_history
+          self.history = nil
+        end
+        
+        def spawn_version?
+          historical_creation or historical_differences
+        end
+        
+        def spawn_version
+          Historical::Models::ModelVersion.for_class(self.class).new.tap do |v|
+            v._record_id    = id
+            v._record_type  = self.class.name
+            
+            attribute_names.each do |attr_name|
+              attr = attr_name.to_sym
+              next if Historical::IGNORED_ATTRIBUTES.include? attr
+              v.send("#{attr}=", self[attr])
+            end
+            
+            v.diff = Historical::Models::ModelDiff.from_versions(v.previous, v, !historical_creation)
+            v.save!
+          end
         end
       end
       
