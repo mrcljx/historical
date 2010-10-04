@@ -12,6 +12,7 @@ describe "A historical model" do
   
   context "when loading model from database without history" do
     before :each do
+      Historical.boot!
       @msg = Message.find(1)
       @msg.history.destroy
     end
@@ -283,17 +284,21 @@ describe "A historical model" do
       cattr_accessor :current_user
 
       extend Historical::ActiveRecord
+      
       is_historical do
-        belongs_to_active_record :author, :required => true, :class_name => "User"
+        meta do
+          belongs_to_active_record :author, :required => true, :class_name => "User"
+        end
 
-        historical_callback do |diff|
-          diff.author = AuditedMessage.current_user
+        callback do |version|
+          version.meta.author = AuditedMessage.current_user
         end
       end
     end
     
     before :each do
       AuditedMessage.current_user = nil
+      Historical.boot!
     end
     
     it "should create custom keys on ModelVersion::Diffs" do
@@ -302,7 +307,7 @@ describe "A historical model" do
       
       msg = AuditedMessage.create(:title => "one")
       
-      author = msg.history.versions.first.diff.author
+      author = msg.history.versions.first.meta.author
       author.should == user
       author.id.should == user.id
     end

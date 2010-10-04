@@ -5,7 +5,20 @@ module Historical
   
   autoload :ModelHistory, "historical/model_history"
   autoload :ActiveRecord, "historical/active_record"
+  autoload :ClassBuilder, "historical/class_builder"
   autoload :MongoMapperEnhancements, "historical/mongo_mapper_enhancements"
+  
+  @@historical_models = []
+  
+  def self.historical_models
+    @@historical_models
+  end
+  
+  def self.boot!
+    historical_models.each do |model|
+      model.generate_historical_models!
+    end
+  end
   
   module Models
     module Pool

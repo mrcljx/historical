@@ -3,7 +3,6 @@ module Historical::Models
     class Diff
       include MongoMapper::EmbeddedDocument
       extend Historical::MongoMapperEnhancements
-      class_inheritable_accessor :historical_callbacks
 
       validates_associated :changes
 
@@ -56,35 +55,17 @@ module Historical::Models
       def diff_type_inquirer
         ActiveSupport::StringInquirer.new(diff_type)
       end
-    
-      def self.historical_callback(&block)
-        raise "no block given" unless block_given?
-
-        self.historical_callbacks ||= []
-        self.historical_callbacks << block
-      end
-    
   
       def self.generate_from_version(version, type = 'creation')
         for_class(version.record.class).new.tap do |d|
           d.diff_type   = type
           d.instance_variable_set :@parent, version
-        
-          if cbs = d.class.historical_callbacks
-            cbs.each do |c|
-              c.call(d)
-            end
-          end
         end
       end
     
       def self.for_class(source_class)
         Historical::Models::Pool.pooled(Historical::Models::Pool.pooled_name(source_class, self)) do
-          Class.new(self).tap do |cls|
-            source_class.historical_customizations.each do |customization|
-              cls.instance_eval(&customization)
-            end
-          end
+          Class.new(self)
         end
       end
     end

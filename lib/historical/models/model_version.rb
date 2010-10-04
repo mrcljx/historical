@@ -1,11 +1,13 @@
 module Historical::Models  
   class ModelVersion
     autoload :Diff, 'historical/models/model_version/diff'
+    autoload :Meta, 'historical/models/model_version/meta'
     
     include MongoMapper::Document
     extend Historical::MongoMapperEnhancements
     
     validate :validate_diff
+    validate :validate_meta
 
     key :_type,           String
     
@@ -14,6 +16,7 @@ module Historical::Models
     timestamps!
   
     one :diff, :class_name => "Historical::Models::ModelVersion::Diff"
+    one :meta, :class_name => "Historical::Models::ModelVersion::Meta"
     
     alias_method :record, :_record
   
@@ -66,6 +69,12 @@ module Historical::Models
     def validate_diff
       if diff.present? and !diff.valid?
         errors.add(:diff, "not valid")
+      end
+    end
+    
+    def validate_meta
+      if meta.present? and !meta.valid?
+        errors.add(:meta, "not valid")
       end
     end
   end

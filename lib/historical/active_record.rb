@@ -13,7 +13,9 @@ module Historical
     
     def is_historical(&block)
       class_eval do
-        cattr_accessor :historical_customizations, :historical_installed
+        cattr_accessor :historical_customizations, :historical_callbacks, :historical_installed
+        cattr_accessor :historical_meta_class, :historical_version_class, :historical_diff_class
+        
         attr_accessor :historical_differences, :historical_creation, :historical_version
         
         before_save :detect_version_spawn
@@ -59,14 +61,22 @@ module Historical
             v._record_id    = id
             v._record_type  = self.class.name
             
+            
             attribute_names.each do |attr_name|
               attr = attr_name.to_sym
               next if Historical::IGNORED_ATTRIBUTES.include? attr
               v.send("#{attr}=", self[attr])
             end
             
-            previous = (mode != :create ? v.previous : nil)
-            v.diff = Historical::Models::ModelVersion::Diff.from_versions(previous, v)
+            previous  = (mode != :create ? v.previous : nil)
+            
+            v.diff    = Historical::Models::ModelVersion::Diff.from_versions(previous, v)
+            v.meta    = self.class.historical_meta_class.new
+            
+            (self.class.historical_callbacks || []).each do |callback|
+              callback.call(v)
+            end
+            
             v.save!
           end
         end
@@ -76,9 +86,23 @@ module Historical
       self.historical_customizations    ||= []
       self.historical_customizations    << block if block_given?
       
-      # generate pooled classes
-      Historical::Models::ModelVersion::Diff.for_class(self)
-      Historical::Models::ModelVersion.for_class(self)
+      Historical.historical_models      << self
+    end
+    
+    def generate_historical_models!
+      if historical_version_class
+        logger.warn("Historical models for #{name} have been generated already.")
+        return
+      end
+      
+      builder = Historical::ClassBuilder.new(self)
+      
+      self.historical_callbacks     ||= []
+      self.historical_callbacks     += builder.callbacks
+      
+      self.historical_version_class = builder.version_class
+      self.historical_meta_class    = builder.meta_class
+      self.historical_diff_class    = builder.diff_class
     end
   end
 end
