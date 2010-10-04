@@ -66,7 +66,7 @@ module Historical
             end
             
             previous = (mode != :create ? v.previous : nil)
-            v.diff = Historical::Models::ModelDiff.from_versions(previous, v)
+            v.diff = Historical::Models::ModelVersion::Diff.from_versions(previous, v)
             v.save!
           end
         end
@@ -77,7 +77,7 @@ module Historical
       self.historical_customizations    << block if block_given?
       
       # generate pooled classes
-      Historical::Models::ModelDiff.for_class(self)
+      Historical::Models::ModelVersion::Diff.for_class(self)
       Historical::Models::ModelVersion.for_class(self)
     end
   end

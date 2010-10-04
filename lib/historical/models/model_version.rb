@@ -1,5 +1,7 @@
 module Historical::Models  
   class ModelVersion
+    autoload :Diff, 'historical/models/model_version/diff'
+    
     include MongoMapper::Document
     extend Historical::MongoMapperEnhancements
     
@@ -11,7 +13,7 @@ module Historical::Models
     
     timestamps!
   
-    one :diff, :class_name => "Historical::Models::ModelDiff"
+    one :diff, :class_name => "Historical::Models::ModelVersion::Diff"
     
     alias_method :record, :_record
   

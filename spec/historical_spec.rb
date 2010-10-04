@@ -152,13 +152,13 @@ describe "A historical model" do
     
       it "should create attribute-diffs in update-diff" do
         @msg.history.tap do |h|
-          model_diff = h.updates.first.diff
-          model_diff.changes.count.should == 1
+          diff = h.updates.first.diff
+          diff.changes.count.should == 1
   
-          model_diff.changes.first.tap do |diff|  
-            diff.attribute.should == "title"
-            diff.old_value.should == @first_title
-            diff.new_value.should == @new_title
+          diff.changes.first.tap do |attr_diff|
+            attr_diff.attribute.should == "title"
+            attr_diff.old_value.should == @first_title
+            attr_diff.new_value.should == @new_title
           end
         end
       end
@@ -296,7 +296,7 @@ describe "A historical model" do
       AuditedMessage.current_user = nil
     end
     
-    it "should create custom keys on ModelDiffs" do
+    it "should create custom keys on ModelVersion::Diffs" do
       user = User.create(:name => "Jane Doe")
       AuditedMessage.current_user = user
       
