@@ -94,8 +94,8 @@ When calling `model.history` you will get a object that contains several methods
  
 **`history.next_version`?**
 
-    old_message = message.history.original_version.restore!
-    not_so_old_message = old_message.history.next_version.restore!
+    old_message = message.history.original_version.restore
+    not_so_old_message = old_message.history.next_version.restore
     
 
 Intellectual Property
