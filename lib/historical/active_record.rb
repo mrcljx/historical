@@ -90,11 +90,6 @@ module Historical
     end
     
     def generate_historical_models!
-      if historical_version_class
-        logger.warn("Historical models for #{name} have been generated already.")
-        return
-      end
-      
       builder = Historical::ClassBuilder.new(self)
       
       self.historical_callbacks     ||= []

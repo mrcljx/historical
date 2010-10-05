@@ -15,6 +15,8 @@ module Historical
   end
   
   def self.boot!
+    Historical::Models::Pool.clear!
+    
     historical_models.each do |model|
       model.generate_historical_models!
     end
@@ -24,16 +26,26 @@ module Historical
     module Pool
       # cached classes are stored here
       
+      @@class_pool = {}
+      
       def self.pooled(name)
-        @@class_pool ||= {}
+        
         return @@class_pool[name] if @@class_pool[name]
         
         cls = yield
         
-        Historical::Models::Pool::const_set(name, cls)
+        const_set(name, cls)
         @@class_pool[name] = cls
         
         cls
+      end
+      
+      def self.clear!
+        @@class_pool.each do |k,v|
+          remove_const(k)
+        end
+        
+        @@class_pool = {}
       end
       
       def self.pooled_name(specialized_for, parent)
