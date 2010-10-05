@@ -27,7 +27,7 @@ module Historical
     end
   
     def versions
-      Models::ModelVersion.for_record(record).sort(:created_at.asc, :id.asc)
+      Models::ModelVersion.for_record(record).sort(:"meta.created_at".asc, :_id.asc)
     end
     
     delegate :version_index, :to => :own_version

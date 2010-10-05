@@ -3,7 +3,8 @@ module Historical::Models
     class Meta
       include MongoMapper::EmbeddedDocument
       extend Historical::MongoMapperEnhancements
-    
+      
+      key :created_at, Time
     
       def self.for_class(source_class)
         Historical::Models::Pool.pooled(Historical::Models::Pool.pooled_name(source_class, self)) do

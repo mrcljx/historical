@@ -8,15 +8,17 @@ module Historical::Models
     
     validate :validate_diff
     validate :validate_meta
+    
+    validates_presence_of :meta
 
     key :_type,           String
     
     belongs_to_active_record :_record, :polymorphic => true, :required => true
-    
-    timestamps!
   
     one :diff, :class_name => "Historical::Models::ModelVersion::Diff"
     one :meta, :class_name => "Historical::Models::ModelVersion::Meta"
+    
+    before_save :update_timestamps
     
     alias_method :record, :_record
   
@@ -25,7 +27,7 @@ module Historical::Models
     end
   
     def previous_versions
-      (new? ? siblings : siblings.where(:created_at.lte => created_at, :_id.lt => _id)).sort(:created_at.desc, :id.desc)
+      (new? ? siblings : siblings.where(:"meta.created_at".lte => created_at, :_id.lt => _id)).sort(:"meta.created_at".desc, :_id.desc)
     end
   
     def previous
@@ -33,7 +35,7 @@ module Historical::Models
     end
   
     def next_versions
-      siblings.where(:created_at.gte => created_at, :_id.gt => _id).sort(:created_at.asc, :id.asc)
+      siblings.where(:"meta.created_at".gte => created_at, :_id.gt => _id).sort(:"meta.created_at".asc, :_id.asc)
     end
   
     def next
@@ -65,6 +67,13 @@ module Historical::Models
     end
     
     protected
+    
+    def update_timestamps
+      if new? and !meta.created_at?
+        now = Time.now.utc
+        meta[:created_at] = now
+      end
+    end
     
     def validate_diff
       if diff.present? and !diff.valid?
