@@ -1,6 +1,6 @@
 module Historical
   class ModelHistory
-    attr_reader :record
+    attr_reader :record, :base_version
     
     def initialize(record)
       @record = record
@@ -76,34 +76,11 @@ module Historical
       end
     end
     
-    def restore(version_query)
-      version = version_by_query(version_query)
-      
-      raise ::ActiveRecord::RecordNotFound, "version does not exist" unless version
-      
-      record.clone.tap do |r|
-        r.id = record.id
-        
-        r.class.columns.each do |c|
-          attr = c.name.to_sym
-          next if Historical::IGNORED_ATTRIBUTES.include? attr
-          
-          r[attr] = version.send(attr)
-        end
-        
-        r.historical_version = version.version_index
-        r.clear_association_cache
-        r.history = nil
-      end
+    def restore(query)
+      version = version_by_query(query)
+      raise ::ActiveRecord::RecordNotFound, "version (base_version: #{base_version}, query: #{query}) does not exist" unless version
+      version.restore(record)
     end
-    
-    def restore_with_protection(*args)
-      restore_without_protection(*args).tap do |r|
-        r.readonly!
-      end
-    end
-    
-    alias_method_chain :restore, :protection
     
     %w(original latest previous next).each do |k|
       alias_method k, "#{k}_version"

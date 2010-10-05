@@ -46,6 +46,32 @@ module Historical::Models
       previous_versions.count
     end
     
+    def restore(base = nil)
+      base ||= record
+      
+      base.clone.tap do |r|
+        r.class.columns.each do |c|
+          attr = c.name.to_sym
+          next if Historical::IGNORED_ATTRIBUTES.include? attr
+          
+          r[attr] = send(attr)
+        end
+        
+        r.id = base.id
+        r.historical_version = version_index
+        r.clear_association_cache
+        r.history = nil
+      end
+    end
+    
+    def restore_with_protection(*args)
+      restore_without_protection(*args).tap do |r|
+        r.readonly!
+      end
+    end
+    
+    alias_method_chain :restore, :protection
+    
     def self.for_record(record_or_id, type = nil)
       if type
         ModelVersion.where(:_record_id => record_or_id, :_record_type => type)
