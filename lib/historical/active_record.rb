@@ -10,7 +10,7 @@ module Historical
         type.to_s.classify
       end
     end
-    
+        
     def is_historical(&block)
       class_eval do
         cattr_accessor :historical_customizations, :historical_callbacks, :historical_installed
@@ -80,6 +80,17 @@ module Historical
             v.save!
           end
         end
+        
+        def self.generate_historical_models!
+          builder = Historical::ClassBuilder.new(self)
+
+          self.historical_callbacks     ||= []
+          self.historical_callbacks     += builder.callbacks
+
+          self.historical_version_class = builder.version_class
+          self.historical_meta_class    = builder.meta_class
+          self.historical_diff_class    = builder.diff_class
+        end
       end
       
       self.historical_installed         = true
@@ -87,17 +98,6 @@ module Historical
       self.historical_customizations    << block if block_given?
       
       Historical.historical_models      << self
-    end
-    
-    def generate_historical_models!
-      builder = Historical::ClassBuilder.new(self)
-      
-      self.historical_callbacks     ||= []
-      self.historical_callbacks     += builder.callbacks
-      
-      self.historical_version_class = builder.version_class
-      self.historical_meta_class    = builder.meta_class
-      self.historical_diff_class    = builder.diff_class
     end
   end
 end
