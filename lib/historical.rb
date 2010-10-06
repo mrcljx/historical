@@ -1,12 +1,18 @@
-require 'historical/railtie' if defined?(Rails::Railtie)
+require 'historical/railtie'
 
 module Historical
-  IGNORED_ATTRIBUTES = [:id]
+  autoload :ModelHistory,             'historical/model_history'
+  autoload :ActiveRecord,             'historical/active_record'
+  autoload :ClassBuilder,             'historical/class_builder'
+  autoload :MongoMapperEnhancements,  'historical/mongo_mapper_enhancements'
   
-  autoload :ModelHistory, "historical/model_history"
-  autoload :ActiveRecord, "historical/active_record"
-  autoload :ClassBuilder, "historical/class_builder"
-  autoload :MongoMapperEnhancements, "historical/mongo_mapper_enhancements"
+  module Models
+    autoload :Pool,                   'historical/models/pool'
+    autoload :AttributeDiff,          'historical/models/attribute_diff'
+    autoload :ModelVersion,           'historical/models/model_version'
+  end
+  
+  IGNORED_ATTRIBUTES = [:id]
   
   @@historical_models = []
   
@@ -20,40 +26,5 @@ module Historical
     historical_models.each do |model|
       model.generate_historical_models!
     end
-  end
-  
-  module Models
-    module Pool
-      # cached classes are stored here
-      
-      @@class_pool = {}
-      
-      def self.pooled(name)
-        
-        return @@class_pool[name] if @@class_pool[name]
-        
-        cls = yield
-        
-        const_set(name, cls)
-        @@class_pool[name] = cls
-        
-        cls
-      end
-      
-      def self.clear!
-        @@class_pool.each do |k,v|
-          remove_const(k)
-        end
-        
-        @@class_pool = {}
-      end
-      
-      def self.pooled_name(specialized_for, parent)
-        "#{specialized_for.name.demodulize}#{parent.name.demodulize}"
-      end
-    end
-    
-    autoload :AttributeDiff,  'historical/models/attribute_diff'
-    autoload :ModelVersion,   'historical/models/model_version'
   end
 end

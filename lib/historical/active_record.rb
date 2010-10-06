@@ -11,30 +11,11 @@ module Historical
         type.to_s.classify
       end
     end
-  
-    # Enables Historical in this model.
-    #
-    # @example simple
-    #   class Message < ActiveRecord::Base
-    #     is_historical
-    #   end
-    #
-    # @example advanced, with custom meta-data (auditing)
-    #   class Message < ActiveRecord::Base
-    #     is_historical do
-    #       meta do
-    #         belongs_to_active_record :user
-    #         key :cause, String
-    #       end
-    #     
-    #       callback do |version|
-    #         version.meta.cause  = "just because"
-    #         version.meta.user   = App.current_user
-    #       end
-    #     end
-    #   end
-    def is_historical(&block)
-      class_eval do
+    
+    module Extensions
+      extend ActiveSupport::Concern
+      
+      included do
         cattr_accessor :historical_customizations, :historical_callbacks, :historical_installed
         cattr_accessor :historical_meta_class, :historical_version_class, :historical_diff_class
         
@@ -45,7 +26,22 @@ module Historical
         after_save :spawn_version, :if => :spawn_version?
         
         attr_writer :history
-        
+      end
+      
+      module ClassMethods
+        def generate_historical_models!
+          builder = Historical::ClassBuilder.new(self)
+
+          self.historical_callbacks     ||= []
+          self.historical_callbacks     += builder.callbacks
+
+          self.historical_version_class = builder.version_class
+          self.historical_meta_class    = builder.meta_class
+          self.historical_diff_class    = builder.diff_class
+        end
+      end
+      
+      module InstanceMethods
         def history
           @history ||= Historical::ModelHistory.new(self)
         end
@@ -102,18 +98,32 @@ module Historical
             v.save!
           end
         end
-        
-        def self.generate_historical_models!
-          builder = Historical::ClassBuilder.new(self)
-
-          self.historical_callbacks     ||= []
-          self.historical_callbacks     += builder.callbacks
-
-          self.historical_version_class = builder.version_class
-          self.historical_meta_class    = builder.meta_class
-          self.historical_diff_class    = builder.diff_class
-        end
       end
+    end
+  
+    # Enables Historical in this model.
+    #
+    # @example simple
+    #   class Message < ActiveRecord::Base
+    #     is_historical
+    #   end
+    #
+    # @example advanced, with custom meta-data (auditing)
+    #   class Message < ActiveRecord::Base
+    #     is_historical do
+    #       meta do
+    #         belongs_to_active_record :user
+    #         key :cause, String
+    #       end
+    #     
+    #       callback do |version|
+    #         version.meta.cause  = "just because"
+    #         version.meta.user   = App.current_user
+    #       end
+    #     end
+    #   end
+    def is_historical(&block)
+      include Historical::ActiveRecord::Extensions
       
       self.historical_installed         = true
       self.historical_customizations    ||= []
