@@ -1,5 +1,6 @@
 module Historical
   module ActiveRecord
+    # converts database fieldtypes to Ruby types
     def self.sql_to_type(type)
       case type.to_sym
       when :datetime then "Time"
@@ -10,7 +11,28 @@ module Historical
         type.to_s.classify
       end
     end
-        
+  
+    # Enables Historical in this model.
+    #
+    # @example simple
+    #   class Message < ActiveRecord::Base
+    #     is_historical
+    #   end
+    #
+    # @example advanced, with custom meta-data (auditing)
+    #   class Message < ActiveRecord::Base
+    #     is_historical do
+    #       meta do
+    #         belongs_to_active_record :user
+    #         key :cause, String
+    #       end
+    #     
+    #       callback do |version|
+    #         version.meta.cause  = "just because"
+    #         version.meta.user   = App.current_user
+    #       end
+    #     end
+    #   end
     def is_historical(&block)
       class_eval do
         cattr_accessor :historical_customizations, :historical_callbacks, :historical_installed
