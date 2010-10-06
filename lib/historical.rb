@@ -1,4 +1,5 @@
 require 'historical/railtie'
+require 'active_support'
 
 module Historical
   autoload :ModelHistory,             'historical/model_history'
@@ -14,11 +15,8 @@ module Historical
   
   IGNORED_ATTRIBUTES = [:id]
   
-  @@historical_models = []
-  
-  def self.historical_models
-    @@historical_models
-  end
+  @@historical_models = []  
+  mattr_reader :historical_models
   
   def self.boot!
     Historical::Models::Pool.clear!
