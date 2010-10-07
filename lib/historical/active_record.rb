@@ -12,6 +12,7 @@ module Historical
       end
     end
     
+    # Extensions for a model that is flagged as `is_historical`.
     module Extensions
       extend ActiveSupport::Concern
       
@@ -22,13 +23,14 @@ module Historical
         attr_accessor :historical_differences, :historical_creation, :historical_version
         
         before_save :detect_version_spawn
-        after_save :invalidate_history
+        after_save :invalidate_history!
         after_save :spawn_version, :if => :spawn_version?
         
         attr_writer :history
       end
       
       module ClassMethods
+        # Generates the customized classes ({Models::ModelVersion}, {Models::ModelVersion::Meta}, {Models::ModelVersion::Diff}) for this model.
         def generate_historical_models!
           builder = Historical::ClassBuilder.new(self)
 
@@ -42,16 +44,26 @@ module Historical
       end
       
       module InstanceMethods
+        # @return [ModelHistory] The history of this model
         def history
           @history ||= Historical::ModelHistory.new(self)
         end
         
+        # @return [Integer] The version number of this model
         def version
           historical_version || history.own_version.version_index
         end
         
+        # Invalidates the history of that model
+        # @private
+        def invalidate_history!
+          @history = nil
+        end
+        
         protected
         
+        # Set some flags before saving the model (so that after_save-callbacks can be run)
+        # @private
         def detect_version_spawn
           if new_record?
             self.historical_creation = true
@@ -64,14 +76,14 @@ module Historical
           true
         end
         
-        def invalidate_history
-          self.history = nil
-        end
-        
+        # Check whether a new version should be spawned (also see {detect_version_spawn})
+        # @private
         def spawn_version?
           historical_creation or historical_differences
         end
         
+        # Spawns a new version
+        # @private
         def spawn_version(mode = :update)
           mode = :create if historical_creation
           

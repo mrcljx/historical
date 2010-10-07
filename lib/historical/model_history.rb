@@ -23,7 +23,7 @@ module Historical
     
     def destroy
       versions.remove
-      record.history = nil if record.history == self
+      record.invalidate_history! if record.history == self
     end
   
     def versions

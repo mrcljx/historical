@@ -1,5 +1,6 @@
 module Historical::Models
   class ModelVersion
+    # Contains the differences between the current and the previous version.
     class Diff
       include MongoMapper::EmbeddedDocument
       extend Historical::MongoMapperEnhancements
@@ -8,22 +9,29 @@ module Historical::Models
 
       key   :_type,       String
       key   :diff_type,   String,   :required => true
+      
+      # @return [Array<Historical::Models::AttributeDiff>]
       many  :changes,     :class_name => "Historical::Models::AttributeDiff"
     
       delegate :creation?, :update?, :to => :diff_type_inquirer
   
+      # The record the diff was applied on
       def record
         new_version.record
       end
-  
+      
+      # The version after the diff was applied
       def new_version
         @parent || _parent_document
       end
   
+      # The version before the diff was applied
       def old_version
         new_version.previous
       end
 
+      # Generates a diff from two versions.
+      # @private
       def self.from_versions(from, to)
         return from_creation(to) if !from
       
@@ -46,16 +54,22 @@ module Historical::Models
         end
       end
 
+      # Generates a creation diff
+      # @private
       def self.from_creation(to)
         generate_from_version(to)
       end
   
       protected
     
+      # Helper to allow diff_type.create? and diff_type.update?
+      # @private
       def diff_type_inquirer
         ActiveSupport::StringInquirer.new(diff_type)
       end
   
+      # Generates a basic Diff instance
+      # @private
       def self.generate_from_version(version, type = 'creation')
         for_class(version.record.class).new.tap do |d|
           d.diff_type   = type
@@ -63,6 +77,9 @@ module Historical::Models
         end
       end
     
+      # Retrieve customized class definition for a record class (e.g. TopicDiff, MessageDiff)
+      # @return [Class]
+      # @private
       def self.for_class(source_class)
         Historical::Models::Pool.pooled(Historical::Models::Pool.pooled_name(source_class, self)) do
           Class.new(self)

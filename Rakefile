@@ -35,6 +35,30 @@ task :spec => :check_dependencies
 task :default => :spec
 
 require 'yard'
+class YARD::Handlers::Ruby::Legacy::MongoHandler < YARD::Handlers::Ruby::Legacy::Base
+  handles /^(one|many|key)/
+
+  def process
+    match = statement.tokens.to_s.match(/^(one|many|key)\s+:([a-zA-Z0-9_]+)/)
+    return unless match
+    
+    type, method = match[1], match[2]
+    
+    case type
+    when "many"
+      register(MethodObject.new(namespace, method) do |obj|
+        if obj.tag(:return) && (obj.tag(:return).types || []).empty?
+          obj.tag(:return).types = ['Array']
+        elsif obj.tag(:return).nil?
+          obj.docstring.add_tag(YARD::Tags::Tag.new(:return, "", "Array"))
+        end
+      end)
+    else
+      register MethodObject.new(namespace, method)
+    end
+  end
+end
+
 YARD::Rake::YardocTask.new do |t|
   t.files   = FileList['lib/**/*.rb']
 end
