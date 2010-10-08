@@ -12,9 +12,14 @@ describe "A historical model" do
   
   context "when loading model from database without history" do
     before :each do
+      @old_autospawn_value = Historical.autospawn_creation
       Historical.boot!
       @msg = Message.find(1)
       @msg.history.destroy
+    end
+    
+    after :each do
+      Historical.autospawn_creation = @old_autospawn_value
     end
     
     it "should call the creation-generator" do
@@ -29,6 +34,11 @@ describe "A historical model" do
     it "should auto-generate a creation" do
       @msg.history.version_index.should == 0
       @msg.history.creation.should_not be_nil
+    end
+    
+    it "should not auto-generate creation if auto-generation is disabled" do
+      Historical.autospawn_creation = false
+      @msg.history.creation.should be_nil
     end
     
     it "should have the original timestamps" do

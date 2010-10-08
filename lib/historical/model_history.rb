@@ -12,8 +12,8 @@ module Historical
       else
         version_count = versions.count
         
-        if version_count.zero?
-          spawn_creation!
+        if Historical.autospawn_creation and version_count.zero?
+          assert_creation!
           version_count = 1
         end
         
@@ -63,7 +63,7 @@ module Historical
   
     # @return [Models::ModelVersion] The creation version (should be the {#original_version}).
     def creation
-      versions.where("diff.diff_type" => "creation").first
+      @creation ||= versions.where("diff.diff_type" => "creation").first
     end
   
     # @return [Models::ModelVersion] The update versions (every version except the {#creation}).
@@ -111,14 +111,20 @@ module Historical
       alias_method k, "#{k}_version"
     end
     
+    # Makes sure that w
+    def assert_creation!
+      spawn_creation! unless creation
+    end
+    
     protected
     
     # Spawns a creation version for this model.
     # @private
     def spawn_creation!
-      record.send(:spawn_version, :create).tap do |e|
-        e.created_at = record.created_at
-        e.save!
+      record.send(:spawn_version, :create).tap do |c|
+        c.created_at = record.created_at
+        c.save!
+        @creation = c
       end
     end
   end

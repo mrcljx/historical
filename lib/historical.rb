@@ -17,9 +17,11 @@ module Historical
   
   IGNORED_ATTRIBUTES = [:id]
   
-  @@historical_models = []  
+  @@historical_models = []
+  @@autospawn_creation = true
   @@booted = false
   
+  mattr_accessor :autospawn_creation
   mattr_reader :historical_models
   def self.booted?; @@booted; end
   
