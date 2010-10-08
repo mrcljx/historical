@@ -30,6 +30,17 @@ module Historical::Models
         new_version.previous
       end
 
+      # @return [Hash] The changes stored in a Hash.
+      # @example Structure (:attribute => [old_value, new_value])
+      #   { :topic => ["Old Topic", "New Topic"], :votes => [10, 20] }
+      def to_hash
+        {}.tap do |result|
+          changes.each do |c|
+            result[c.attribute.to_sym] = [c.old_value, c.new_value]
+          end
+        end
+      end
+
       # Generates a diff from two versions.
       # @private
       def self.from_versions(from, to)

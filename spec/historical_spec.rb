@@ -132,6 +132,20 @@ describe "A historical model" do
       grouped[:stamped_on].old_value.should == nil
     end
     
+    it "should return changes as an hash" do
+      m = Message.create(:title => "a", :votes => 1)
+      
+      m.title = "b"
+      m.votes = 2
+      m.save!
+      
+      diff = m.history.updates.last.diff
+      diff.to_hash.should == {
+        :title => ["a", "b"],
+        :votes => [1, 2]
+      }
+    end
+    
     context "on a single field" do
       before :each do
         @first_title = "Hello"
