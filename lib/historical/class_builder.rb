@@ -26,7 +26,7 @@ module Historical
       self.meta_class     = Historical::Models::ModelVersion::Meta.for_class(base)
       
       base.historical_customizations.each do |customization|
-        self.instance_eval(&customization)
+        instance_eval(&customization)
       end
     end
     
