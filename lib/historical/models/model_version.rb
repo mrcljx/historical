@@ -127,9 +127,7 @@ module Historical::Models
       return nil if attrs.nil?
       
       if (record_type = attrs['_record_type']).present?
-        class_name = Historical::Models::Pool.pooled_name(record_type, self)
-        full_class_name = "Historical::Models::Pool::#{class_name}"
-        full_class_name.constantize
+        Historical::Models::ModelVersion.for_class(record_type.constantize)
       else
         self
       end.allocate.initialize_from_database(attrs)

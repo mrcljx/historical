@@ -9,7 +9,7 @@ module Historical
     end
     
     config.to_prepare do
-      Historical::Models::Pool.clear!
+      Historical.reset!
       Historical.boot!
     end
   end

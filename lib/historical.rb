@@ -30,6 +30,12 @@ module Historical
   mattr_reader :historical_models
   def self.booted?; @@booted; end
   
+  def self.reset!
+    @@booted = false
+    @@historical_models = []
+    Historical::Models::Pool.clear!
+  end
+  
   # Generates all customized models.
   def self.boot!
     return if booted?
