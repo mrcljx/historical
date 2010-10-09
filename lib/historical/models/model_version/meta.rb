@@ -11,9 +11,7 @@ module Historical::Models
       # Retrieve customized class definition for a record class (e.g. TopicMeta, MessageMeta)
       # @return [Class]
       def self.for_class(source_class)
-        Historical::Models::Pool.pooled(Historical::Models::Pool.pooled_name(source_class, self)) do
-          Class.new(self)
-        end
+        Class.new(self)
       end
     end
   end

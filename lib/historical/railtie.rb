@@ -6,9 +6,6 @@ module Historical
   class Railtie < Rails::Railtie
     initializer "historical.attach_to_active_record" do
       ::ActiveRecord::Base.send(:extend, Historical::ActiveRecord)
-    end
-    
-    config.to_prepare do
       Historical.reset!
       Historical.boot!
     end

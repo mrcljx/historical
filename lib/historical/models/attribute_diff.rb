@@ -1,6 +1,7 @@
 module Historical::Models
   # The diff of an attribute (specialized by a type qualifier)
   class AttributeDiff
+    
     # MongoMappers supported native Ruby types
     SUPPORTED_NATIVE_RUBY_TYPES = %w{Date String Time Boolean Integer Float Binary}
     

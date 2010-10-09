@@ -1,33 +1,58 @@
 module Historical
   # Builds the customized classes for a record.
   class ClassBuilder
+    
+    # @return [Class] The class for which customized versions should be generated.
+    # @private
+    attr_reader :base
+    
     # @return [Array<Proc>] A list of callbacks to be evaluated on save.
     # @private
-    attr_accessor :callbacks
+    attr_reader :callbacks
     
     # @return [Class] A customized subclass of {Models::ModelVersion::Meta}
     # @private
-    attr_accessor :meta_class
+    attr_reader :meta_class
     
     # @return [Class] A customized subclass of {Models::ModelVersion::Diff}
     # @private
-    attr_accessor :diff_class
+    attr_reader :diff_class
     
     # @return [Class] A customized subclass of {Models::ModelVersion}
     # @private
-    attr_accessor :version_class
+    attr_reader :version_class
     
     # @param base The record on which the customized classes should be based on
     def initialize(base)
-      self.callbacks = []
+      @base = base
+      @callbacks = []
       
-      self.version_class  = Historical::Models::ModelVersion.for_class(base)
-      self.diff_class     = Historical::Models::ModelVersion::Diff.for_class(base)
-      self.meta_class     = Historical::Models::ModelVersion::Meta.for_class(base)
+      @diff_class = Historical::Models::ModelVersion::Diff.for_class(base).tap do |c|
+        # base.const_set "ModelVersionDiff",  c
+        base.historical_diff_class =        c
+      end
+      
+      @meta_class = Historical::Models::ModelVersion::Meta.for_class(base).tap do |c|
+        # base.const_set "ModelVersionMeta",  c
+        base.historical_meta_class =        c
+      end
+      
+      @version_class = Historical::Models::ModelVersion.for_class(base).tap do |c|
+        # base.const_set "ModelVersion",  c
+        base.historical_version_class = c
+      end
       
       base.historical_customizations.each do |customization|
         instance_eval(&customization)
       end
+      
+      # [diff_class, meta_class, version_class].each { |c| c.unloadable }
+    end
+    
+    def apply!
+      base.historical_callbacks     ||= []
+      base.historical_callbacks     += callbacks
+      base
     end
     
     # @group Builder Methods

@@ -17,7 +17,6 @@ module Historical
   module Models
     autoload :AttributeDiff,          'historical/models/attribute_diff'
     autoload :ModelVersion,           'historical/models/model_version'
-    autoload :Pool,                   'historical/models/pool'
   end
   
   IGNORED_ATTRIBUTES = [:id]
@@ -33,14 +32,12 @@ module Historical
   def self.reset!
     @@booted = false
     @@historical_models = []
-    Historical::Models::Pool.clear!
   end
   
   # Generates all customized models.
   def self.boot!
     return if booted?
     
-    Historical::Models::Pool.clear!
     Historical::Models::AttributeDiff.generate_subclasses!
     
     historical_models.each do |model|

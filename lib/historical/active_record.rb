@@ -33,13 +33,7 @@ module Historical
         # Generates the customized classes ({Models::ModelVersion}, {Models::ModelVersion::Meta}, {Models::ModelVersion::Diff}) for this model.
         def generate_historical_models!
           builder = Historical::ClassBuilder.new(self)
-
-          self.historical_callbacks     ||= []
-          self.historical_callbacks     += builder.callbacks
-
-          self.historical_version_class = builder.version_class
-          self.historical_meta_class    = builder.meta_class
-          self.historical_diff_class    = builder.diff_class
+          builder.apply!
         end
       end
       
@@ -87,7 +81,7 @@ module Historical
         def spawn_version(mode = :update)
           mode = :create if historical_creation
           
-          Historical::Models::ModelVersion.for_class(self.class).new.tap do |v|
+          self.class.historical_version_class.new.tap do |v|
             v._record_id    = id
             v._record_type  = self.class.name
             
@@ -100,7 +94,7 @@ module Historical
             
             previous  = (mode != :create ? v.previous : nil)
             
-            v.diff    = Historical::Models::ModelVersion::Diff.from_versions(previous, v)
+            v.diff    = self.class.historical_diff_class.from_versions(previous, v)
             v.meta    = self.class.historical_meta_class.new
             
             (self.class.historical_callbacks || []).each do |callback|

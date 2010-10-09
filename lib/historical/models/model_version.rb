@@ -1,6 +1,6 @@
 module Historical::Models
   # A complete snapshot of a model.
-  class ModelVersion
+  class ModelVersion    
     autoload :Diff, 'historical/models/model_version/diff'
     autoload :Meta, 'historical/models/model_version/meta'
     
@@ -106,20 +106,15 @@ module Historical::Models
     
     # @return [Class] Customized class definition for a record class (e.g. TopicVersion, MessageVersion).
     def self.for_class(source_class)
-      Historical::Models::Pool.pooled(Historical::Models::Pool.pooled_name(source_class, self)) do
-        Class.new(self).tap do |cls|
-          source_class.columns.each do |col|
-            next if Historical::IGNORED_ATTRIBUTES.include? col.name.to_sym
-            type = Historical::ActiveRecord.sql_to_type(col.type)
-            cls.send :key, col.name, type.constantize
-          end
-          
-          diff_class_name = Historical::Models::Pool.pooled_name(source_class, Historical::Models::ModelVersion::Diff)
-          meta_class_name = Historical::Models::Pool.pooled_name(source_class, Historical::Models::ModelVersion::Meta)
-          
-          cls.send :one, :diff, :class_name => "Historical::Models::Pool::#{diff_class_name}"
-          cls.send :one, :meta, :class_name => "Historical::Models::Pool::#{meta_class_name}"
+      Class.new(self).tap do |cls|
+        source_class.columns.each do |col|
+          next if Historical::IGNORED_ATTRIBUTES.include? col.name.to_sym
+          type = Historical::ActiveRecord.sql_to_type(col.type)
+          cls.send :key, col.name, type.constantize
         end
+        
+        cls.send :one, :diff, :class => source_class.historical_diff_class
+        cls.send :one, :meta, :class => source_class.historical_meta_class
       end
     end
     
@@ -127,7 +122,7 @@ module Historical::Models
       return nil if attrs.nil?
       
       if (record_type = attrs['_record_type']).present?
-        Historical::Models::ModelVersion.for_class(record_type.constantize)
+        record_type.constantize.historical_version_class
       else
         self
       end.allocate.initialize_from_database(attrs)
