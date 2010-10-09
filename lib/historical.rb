@@ -3,16 +3,21 @@ require 'active_support'
 
 # Main module for the Historical gem
 module Historical
-  autoload :ModelHistory,             'historical/model_history'
   autoload :ActiveRecord,             'historical/active_record'
   autoload :ClassBuilder,             'historical/class_builder'
-  autoload :MongoMapperEnhancements,  'historical/mongo_mapper_enhancements'
+  autoload :ModelHistory,             'historical/model_history'
+  
+  # Additional MongoMapper plugins
+  module MongoMapper
+    autoload :Enhancements,  'historical/mongo_mapper/enhancements'
+    autoload :SciAntidote,  'historical/mongo_mapper/sci_antidote'
+  end
   
   # MongoDB models used by Historical are stored here
   module Models
-    autoload :Pool,                   'historical/models/pool'
     autoload :AttributeDiff,          'historical/models/attribute_diff'
     autoload :ModelVersion,           'historical/models/model_version'
+    autoload :Pool,                   'historical/models/pool'
   end
   
   IGNORED_ATTRIBUTES = [:id]

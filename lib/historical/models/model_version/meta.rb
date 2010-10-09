@@ -3,7 +3,8 @@ module Historical::Models
     # A meta model which stores additional data to each new version (could be used for audits).
     class Meta
       include MongoMapper::EmbeddedDocument
-      extend Historical::MongoMapperEnhancements
+      plugin Historical::MongoMapper::SciAntidote
+      plugin Historical::MongoMapper::Enhancements
       
       key :created_at, Time
     

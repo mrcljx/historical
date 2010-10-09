@@ -3,11 +3,11 @@ module Historical::Models
     # Contains the differences between the current and the previous version.
     class Diff
       include MongoMapper::EmbeddedDocument
-      extend Historical::MongoMapperEnhancements
+      plugin Historical::MongoMapper::SciAntidote
+      plugin Historical::MongoMapper::Enhancements
 
       validates_associated :changes
 
-      key   :_type,       String
       key   :diff_type,   String,   :required => true
       
       # @return [Array<Historical::Models::AttributeDiff>]

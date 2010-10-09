@@ -5,11 +5,7 @@ module Historical::Models
     SUPPORTED_NATIVE_RUBY_TYPES = %w{Date String Time Boolean Integer Float Binary}
     
     include MongoMapper::EmbeddedDocument
-    extend Historical::MongoMapperEnhancements
-  
-    # class identifier
-    # @private
-    key :_type,           String
+    plugin Historical::MongoMapper::Enhancements
     
     # @return [String] The attribute name
     key :attribute,       String, :required => true

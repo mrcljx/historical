@@ -5,24 +5,23 @@ module Historical::Models
     autoload :Meta, 'historical/models/model_version/meta'
     
     include MongoMapper::Document
-    extend Historical::MongoMapperEnhancements
-    
+    plugin Historical::MongoMapper::SciAntidote
+    plugin Historical::MongoMapper::Enhancements
+
     validate :validate_diff
     validate :validate_meta
     
     validates_presence_of :meta
-
-    key :_type,           String
     
     belongs_to_active_record :_record, :polymorphic => true, :required => true
 
     # The diff between the current and the previous version (if exists)
     # @return [Diff]
-    one :diff, :class_name => "Historical::Models::ModelVersion::Diff"
+    attr_reader :diff
     
     # The meta-data associated with the diff (i.e. this version)
     # @return [Meta]
-    one :meta, :class_name => "Historical::Models::ModelVersion::Meta"
+    attr_reader :meta
     
     before_save :update_timestamps
     
@@ -114,8 +113,26 @@ module Historical::Models
             type = Historical::ActiveRecord.sql_to_type(col.type)
             cls.send :key, col.name, type.constantize
           end
+          
+          diff_class_name = Historical::Models::Pool.pooled_name(source_class, Historical::Models::ModelVersion::Diff)
+          meta_class_name = Historical::Models::Pool.pooled_name(source_class, Historical::Models::ModelVersion::Meta)
+          
+          cls.send :one, :diff, :class_name => "Historical::Models::Pool::#{diff_class_name}"
+          cls.send :one, :meta, :class_name => "Historical::Models::Pool::#{meta_class_name}"
         end
       end
+    end
+    
+    def self.load(attrs)
+      return nil if attrs.nil?
+      
+      if (record_type = attrs['_record_type']).present?
+        class_name = Historical::Models::Pool.pooled_name(record_type, self)
+        full_class_name = "Historical::Models::Pool::#{class_name}"
+        full_class_name.constantize
+      else
+        self
+      end.allocate.initialize_from_database(attrs)
     end
     
     protected

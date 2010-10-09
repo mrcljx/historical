@@ -25,7 +25,15 @@ module Historical::Models
 
     # Generate unique classnames within the pool.
     def self.pooled_name(specialized_for, parent)
-      "#{specialized_for.name.demodulize}#{parent.name.demodulize}"
+      raise "specialized_for must be present" unless specialized_for
+      raise "parent must be a Class" unless parent.is_a? Class
+      
+      case specialized_for
+      when Class
+        "#{specialized_for.name.demodulize}#{parent.name.demodulize}"
+      else
+        "#{specialized_for}#{parent.name.demodulize}"
+      end
     end
   end
 end

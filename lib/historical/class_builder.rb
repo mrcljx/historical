@@ -33,7 +33,7 @@ module Historical
     # @group Builder Methods
     
     # Evaluated within class scope of the custom {Models::ModelVersion::Meta} for this record.
-    # The Meta-class includes `MongoMapper::EmbeddedDocument` and {MongoMapperEnhancements}.
+    # The Meta-class includes `MongoMapper::EmbeddedDocument` and {MongoMapper::Enhancements}.
     # @example Usage within is_historical
     #   is_historical do
     #     meta do
