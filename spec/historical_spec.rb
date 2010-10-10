@@ -10,19 +10,38 @@ describe "A historical model" do
     is_historical
   end
   
+  class AuditedMessage < ActiveRecord::Base
+    set_table_name "messages"
+    
+    cattr_accessor :current_user
+
+    extend Historical::ActiveRecord
+    
+    is_historical do
+      meta do
+        belongs_to_active_record :author, :required => true, :class_name => "User"
+      end
+
+      callback do |version|
+        version.meta.author = AuditedMessage.current_user
+      end
+    end
+  end
+  
   before :each do
     Historical.boot!
+    @old_autospawn_value = Historical.autospawn_creation
+  end
+  
+  after :each do
+    Historical.autospawn_creation = @old_autospawn_value
   end
   
   context "when loading model from database without history" do
     before :each do
-      @old_autospawn_value = Historical.autospawn_creation
+      
       @msg = Message.find(1)
       @msg.history.destroy
-    end
-    
-    after :each do
-      Historical.autospawn_creation = @old_autospawn_value
     end
     
     it "should call the creation-generator" do
@@ -142,8 +161,10 @@ describe "A historical model" do
       m.votes = 2
       m.save!
       
-      diff = m.history.updates.last.diff
-      diff.to_hash.should == {
+      diff = m.history.updates.last.diff.to_hash
+      diff.delete(:updated_at)
+      
+      diff.should == {
         :title => ["a", "b"],
         :votes => [1, 2]
       }
@@ -305,25 +326,8 @@ describe "A historical model" do
   end
   
   context "with customization" do
-    class AuditedMessage < ActiveRecord::Base
-      set_table_name "messages"
-      
-      cattr_accessor :current_user
-
-      extend Historical::ActiveRecord
-      
-      is_historical do
-        meta do
-          belongs_to_active_record :author, :required => true, :class_name => "User"
-        end
-
-        callback do |version|
-          version.meta.author = AuditedMessage.current_user
-        end
-      end
-    end
-    
     before :each do
+      puts AuditedMessage.historical_meta_class
       AuditedMessage.current_user = nil
     end
     

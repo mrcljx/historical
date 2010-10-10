@@ -59,9 +59,8 @@ module Historical
     pending_models.clear
   end
   
-  def self.register(klass)
-    if booted?
-      pending_models.delete(klass)
+  def self.register(klass, now = false)
+    if now or booted?
       klass.generate_historical_models!
       historical_models << klass
     else

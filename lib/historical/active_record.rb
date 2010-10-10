@@ -130,6 +130,8 @@ module Historical
     #     end
     #   end
     def is_historical(&block)
+      return if respond_to?(:historical_installed) and historical_installed
+      
       include Historical::ActiveRecord::Extensions
       
       self.historical_installed         = true
