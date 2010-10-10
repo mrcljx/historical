@@ -10,10 +10,13 @@ describe "A historical model" do
     is_historical
   end
   
+  before :each do
+    Historical.boot!
+  end
+  
   context "when loading model from database without history" do
     before :each do
       @old_autospawn_value = Historical.autospawn_creation
-      Historical.boot!
       @msg = Message.find(1)
       @msg.history.destroy
     end
@@ -322,7 +325,6 @@ describe "A historical model" do
     
     before :each do
       AuditedMessage.current_user = nil
-      Historical.boot!
     end
     
     it "should create custom keys on ModelVersion::Diffs" do

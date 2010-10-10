@@ -71,6 +71,8 @@ module Historical::Models
         
         namespace.send(:remove_const, const_name) if namespace.const_defined?(const_name)
         namespace.const_set(const_name, diff_class)
+        
+        diff_class.unloadable
       end
     end
     

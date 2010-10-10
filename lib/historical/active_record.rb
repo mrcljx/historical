@@ -32,6 +32,7 @@ module Historical
       module ClassMethods
         # Generates the customized classes ({Models::ModelVersion}, {Models::ModelVersion::Meta}, {Models::ModelVersion::Diff}) for this model.
         def generate_historical_models!
+          return if historical_version_class
           builder = Historical::ClassBuilder.new(self)
           builder.apply!
         end
@@ -135,7 +136,7 @@ module Historical
       self.historical_customizations    ||= []
       self.historical_customizations    << block if block_given?
       
-      Historical.historical_models      << self
+      Historical.register(self)
     end
   end
 end

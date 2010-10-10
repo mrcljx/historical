@@ -3,58 +3,74 @@ require 'active_support'
 
 # Main module for the Historical gem
 module Historical
-  autoload :ActiveRecord,             'historical/active_record'
-  autoload :ClassBuilder,             'historical/class_builder'
-  autoload :ModelHistory,             'historical/model_history'
+  extend ActiveSupport::Autoload
+  autoload :ActiveRecord
+  autoload :ClassBuilder
+  autoload :ModelHistory
   
   # Additional MongoMapper plugins
   module MongoMapper
-    autoload :Enhancements,  'historical/mongo_mapper/enhancements'
-    autoload :SciAntidote,  'historical/mongo_mapper/sci_antidote'
+    extend ActiveSupport::Autoload
+    autoload :Enhancements
+    autoload :SciAntidote
   end
   
   # MongoDB models used by Historical are stored here
   module Models
-    autoload :AttributeDiff,          'historical/models/attribute_diff'
-    autoload :ModelVersion,           'historical/models/model_version'
+    extend ActiveSupport::Autoload
+    autoload :AttributeDiff
+    autoload :ModelVersion
   end
   
   IGNORED_ATTRIBUTES = [:id]
   
   @@historical_models = []
+  @@pending_models = []
   @@autospawn_creation = true
   @@booted = false
   
   mattr_accessor :autospawn_creation
-  mattr_reader :historical_models
+  
   def self.booted?; @@booted; end
   
   def self.reset!
     @@booted = false
-    @@historical_models = []
+    
+    historical_models.each do |m|
+      Historical::Models::ModelVersion.descendants.delete(m.historical_version_class)
+      Historical::Models::ModelVersion::Diff.descendants.delete(m.historical_diff_class)
+      Historical::Models::ModelVersion::Meta.descendants.delete(m.historical_meta_class)
+    end
+      
+    historical_models.clear
   end
   
   # Generates all customized models.
   def self.boot!
     return if booted?
+    @@booted = true
     
     Historical::Models::AttributeDiff.generate_subclasses!
     
-    historical_models.each do |model|
-      model.generate_historical_models!
+    pending_models.each do |klass|
+      register(klass)
     end
     
-    @@booted = true
-    @@historical_models = ImmediateLoader.new
+    pending_models.clear
   end
   
-  class ImmediateLoader
-    def <<(model)
-      model.generate_historical_models!
-    end
-    
-    def each
-      false
+  def self.register(klass)
+    if booted?
+      pending_models.delete(klass)
+      klass.generate_historical_models!
+      historical_models << klass
+    else
+      pending_models << klass
     end
   end
+  
+  protected
+  
+  mattr_reader :historical_models
+  mattr_reader :pending_models
 end

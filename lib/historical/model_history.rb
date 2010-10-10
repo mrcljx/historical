@@ -111,7 +111,7 @@ module Historical
       alias_method k, "#{k}_version"
     end
     
-    # Makes sure that w
+    # Makes sure that we have a creation of this model.
     def assert_creation!
       spawn_creation! unless creation
     end

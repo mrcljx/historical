@@ -28,17 +28,17 @@ module Historical
       @callbacks = []
       
       @diff_class = Historical::Models::ModelVersion::Diff.for_class(base).tap do |c|
-        # base.const_set "ModelVersionDiff",  c
+        base.const_set "ModelVersionDiff",  c
         base.historical_diff_class =        c
       end
       
       @meta_class = Historical::Models::ModelVersion::Meta.for_class(base).tap do |c|
-        # base.const_set "ModelVersionMeta",  c
+        base.const_set "ModelVersionMeta",  c
         base.historical_meta_class =        c
       end
       
       @version_class = Historical::Models::ModelVersion.for_class(base).tap do |c|
-        # base.const_set "ModelVersion",  c
+        base.const_set "ModelVersion",  c
         base.historical_version_class = c
       end
       
@@ -46,7 +46,7 @@ module Historical
         instance_eval(&customization)
       end
       
-      # [diff_class, meta_class, version_class].each { |c| c.unloadable }
+      [diff_class, meta_class, version_class].each { |c| c.unloadable }
     end
     
     def apply!

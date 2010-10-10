@@ -1,8 +1,10 @@
 module Historical::Models
   # A complete snapshot of a model.
-  class ModelVersion    
-    autoload :Diff, 'historical/models/model_version/diff'
-    autoload :Meta, 'historical/models/model_version/meta'
+  class ModelVersion
+    extend ActiveSupport::Autoload
+    
+    autoload :Diff
+    autoload :Meta
     
     include MongoMapper::Document
     plugin Historical::MongoMapper::SciAntidote
