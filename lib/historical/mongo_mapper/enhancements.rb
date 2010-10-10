@@ -4,6 +4,41 @@ module Historical::MongoMapper
     extend ActiveSupport::Concern
     
     module ClassMethods
+      def ensure_embedded_indexes
+        associations.each do |assoc|
+          next unless assoc.one?
+          
+          klass = assoc.klass
+          next unless klass.embeddable?
+          
+          klass.embedded_indexes.each do |index|
+            new_index = case index
+            when Array
+              index.collect do |s|
+                k, v = *s
+                [:"#{assoc.name}.#{k}", v]
+              end
+            else
+              :"#{assoc.name}.#{index}"
+            end
+            
+            ensure_index(new_index)
+          end
+        end
+      end
+      
+      def embedded_indexes
+        @@embedded_indexes ||= []
+      end
+      
+      def ensure_index(*args)
+        if embeddable?
+          embedded_indexes << args
+        else
+          super
+        end
+      end
+      
       # Simple `belongs_to` relation to an ActiveRecord model.
       # 
       # @param name The name of the relation.
@@ -15,6 +50,7 @@ module Historical::MongoMapper
       
         polymorphic   = options.delete(:polymorphic)
         class_name    = options.delete(:class_name)
+        index         = options.delete(:index)
         model_class   = nil
       
         # classname
@@ -29,6 +65,14 @@ module Historical::MongoMapper
         # define the keys
         key ar_id_field,    Integer,  options
         key ar_type_field,  String,   options if polymorphic
+        
+        if index
+          index_spec =  []
+          index_spec << [ar_id_field,   1]
+          index_spec << [ar_type_field, 1] if polymorphic
+          
+          ensure_index(index_spec)
+        end
       
         # getter
         define_method name do

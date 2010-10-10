@@ -15,7 +15,7 @@ module Historical::Models
     
     validates_presence_of :meta
     
-    belongs_to_active_record :_record, :polymorphic => true, :required => true
+    belongs_to_active_record :_record, :polymorphic => true, :required => true, :index => true
 
     # The diff between the current and the previous version (if exists)
     # @return [Diff]
@@ -117,6 +117,8 @@ module Historical::Models
         
         cls.send :one, :diff, :class => source_class.historical_diff_class
         cls.send :one, :meta, :class => source_class.historical_meta_class
+        
+        cls.ensure_embedded_indexes
       end
     end
     
