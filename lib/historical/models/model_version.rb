@@ -36,7 +36,7 @@ module Historical::Models
   
     # @return [ModelVersion] All the previous versions (immediate predecessor first)
     def previous_versions
-      (new? ? siblings : siblings.where(:"meta.created_at".lte => created_at, :_id.lt => _id)).sort(:"meta.created_at".desc, :_id.desc)
+      (new? ? siblings : siblings.where(:"meta.created_at".lte => meta.created_at, :_id.lt => _id)).sort(:"meta.created_at".desc, :_id.desc)
     end
   
     # @return [ModelVersion] The immediate predecessor version
@@ -46,7 +46,7 @@ module Historical::Models
   
     # @return [Array<ModelVersion>] All the next versions (immediate successor first)
     def next_versions
-      siblings.where(:"meta.created_at".gte => created_at, :_id.gt => _id).sort(:"meta.created_at".asc, :_id.asc)
+      siblings.where(:"meta.created_at".gte => meta.created_at, :_id.gt => _id).sort(:"meta.created_at".asc, :_id.asc)
     end
   
     # @return [ModelVersion] The immediate successor version
@@ -137,8 +137,7 @@ module Historical::Models
     # Sets the created_at timestamp in the meta model
     def update_timestamps
       if new? and !meta.created_at?
-        now = Time.now.utc
-        meta[:created_at] = now
+        meta.created_at = Time.now
       end
     end
     

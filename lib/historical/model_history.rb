@@ -112,8 +112,8 @@ module Historical
     end
     
     # Makes sure that we have a creation of this model.
-    def assert_creation!
-      spawn_creation! unless creation
+    def assert_creation!(&block)
+      spawn_creation!(&block) unless creation
     end
     
     protected
@@ -122,7 +122,8 @@ module Historical
     # @private
     def spawn_creation!
       record.send(:spawn_version, :create).tap do |c|
-        c.created_at = record.created_at
+        c.meta.created_at = record.created_at
+        yield(c) if block_given?
         c.save!
         @creation = c
       end

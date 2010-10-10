@@ -7,6 +7,10 @@ module Historical::Models
       plugin Historical::MongoMapper::Enhancements
       
       key :created_at, Time
+      
+      def created_at=(time)
+        write_key :created_at, time.utc
+      end
     
       # Retrieve customized class definition for a record class (e.g. TopicMeta, MessageMeta)
       # @return [Class]
