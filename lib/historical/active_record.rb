@@ -82,10 +82,10 @@ module Historical
         def spawn_version(mode = :update)
           mode = :create if historical_creation
           
-          self.class.historical_version_class.new.tap do |v|
+          version = self.class.historical_version_class.new
+          version.tap do |v|
             v._record_id    = id
             v._record_type  = self.class.name
-            
             
             attribute_names.each do |attr_name|
               attr = attr_name.to_sym
@@ -93,10 +93,12 @@ module Historical
               v.send("#{attr}=", self[attr])
             end
             
-            previous  = (mode != :create ? v.previous : nil)
+            v.meta = self.class.historical_meta_class.new.tap do |m|
+              m.creation = (mode == :create)
+              m.created_at = Time.now
+            end
             
-            v.diff    = self.class.historical_diff_class.from_versions(previous, v)
-            v.meta    = self.class.historical_meta_class.new
+            v.diff = self.class.historical_diff_class.from_versions(v.previous, v) unless v.creation?
             
             (self.class.historical_callbacks || []).each do |callback|
               callback.call(v)

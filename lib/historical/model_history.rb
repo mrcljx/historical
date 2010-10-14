@@ -63,12 +63,12 @@ module Historical
   
     # @return [Models::ModelVersion] The creation version (should be the {#original_version}).
     def creation
-      @creation ||= versions.where("diff.diff_type" => "creation").first
+      @creation ||= versions.where(:"meta.creation" => true).first
     end
   
     # @return [Models::ModelVersion] The update versions (every version except the {#creation}).
     def updates
-      versions.where("diff.diff_type" => "update")
+      versions.where(:"meta.creation" => false)
     end
     
     # @param [Integer] position The index of the version to be found (zero-based).

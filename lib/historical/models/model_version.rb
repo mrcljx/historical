@@ -9,7 +9,7 @@ module Historical::Models
     include MongoMapper::Document
     plugin Historical::MongoMapper::SciAntidote
     plugin Historical::MongoMapper::Enhancements
-
+    
     validate :validate_diff
     validate :validate_meta
     
@@ -25,9 +25,9 @@ module Historical::Models
     # @return [Meta]
     attr_reader :meta
     
-    before_save :update_timestamps
-    
     alias_method :record, :_record
+    
+    delegate :creation?, :update?, :to => :meta
   
     # @return [Array<ModelVersion>] All other versions of the associated record
     def siblings
@@ -133,13 +133,6 @@ module Historical::Models
     end
     
     protected
-    
-    # Sets the created_at timestamp in the meta model
-    def update_timestamps
-      if new? and !meta.created_at?
-        meta.created_at = Time.now
-      end
-    end
     
     # Cascading validation for `diff`
     def validate_diff

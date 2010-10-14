@@ -6,7 +6,14 @@ module Historical::Models
       plugin Historical::MongoMapper::SciAntidote
       plugin Historical::MongoMapper::Enhancements
       
-      key :created_at, Time
+      key :created_at,  Time,     :required => true
+      key :creation,    Boolean,  :required => true
+      
+      alias :creation? :creation
+      
+      def update?
+        !creation?
+      end
       
       def created_at=(time)
         write_key :created_at, time.utc
