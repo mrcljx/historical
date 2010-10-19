@@ -78,7 +78,7 @@ describe "A historical model" do
       msg.save.should be_true
     end
 
-    it "should create a creation-diff" do
+    it "should create a creation" do
       msg = Message.create(:title => "Hello")
 
       msg.history.tap do |h|
@@ -91,22 +91,31 @@ describe "A historical model" do
     end
   end
 
-  context "when not modified" do
-    before :each do
-      @msg = Message.create(:title => "Hello")
-      @msg.title += "Different"
+  it "should not create new versions when not modified" do
+    @msg = Message.create(:title => "Hello")
+    @msg.title += "Different"
+    @msg.save!
+    
+    version_count = lambda { @msg.history.versions.count }
+
+    lambda do
+      @msg.should_not be_new_record
+      @msg.changes.should be_empty
       @msg.save!
-    end
+    end.should_not change(version_count, :call)
+  end
+    
+  it "should not create new versions if nothing changed" do
+    @msg = Message.create(:title => "Hello")
+    @msg.update_attributes(:title => @msg.title).should be_true
+    
+    version_count = lambda { @msg.history.versions.count }
 
-    it "should not create new versions" do
-      version_count = lambda { @msg.history.versions.count }
-
-      lambda do
-        @msg.should_not be_new_record
-        @msg.changes.should be_empty
-        @msg.save!
-      end.should_not change(version_count, :call)
-    end
+    lambda do
+      @msg.should_not be_new_record
+      @msg.changes.should be_empty
+      @msg.save!
+    end.should_not change(version_count, :call)
   end
 
   context "when modified" do
@@ -153,6 +162,14 @@ describe "A historical model" do
       grouped[:stamped_on].new_value.class.should == Date
       grouped[:stamped_on].new_value.should == date
       grouped[:stamped_on].old_value.should == nil
+    end
+    
+    it "should log the spawned version" do
+      m = Message.create(:title => "a")
+      m.title = "b"
+      m.save!
+      
+      m.history.latest_version.should == m.spawned_version
     end
 
     it "should return changes as an hash" do

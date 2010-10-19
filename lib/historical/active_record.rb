@@ -21,6 +21,7 @@ module Historical
         cattr_accessor :historical_meta_class, :historical_version_class, :historical_diff_class
         
         attr_accessor :historical_differences, :historical_creation, :historical_version
+        attr_accessor :spawned_version
         
         before_save :detect_version_spawn
         after_save :invalidate_history!
@@ -105,6 +106,8 @@ module Historical
             end
             
             v.save!
+            
+            self.spawned_version = v
           end
         end
       end
