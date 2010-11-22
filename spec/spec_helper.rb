@@ -6,7 +6,7 @@ require 'spec/autorun'
 
 require 'rubygems'
 
-gem "rails", "= 3.0.0"
+gem "rails", ">= 3.0.0"
 
 require 'ruby-debug'
 require 'active_support'
@@ -15,13 +15,13 @@ require 'active_record'
 require 'mongo_mapper'
 
 ActiveRecord::Base.establish_connection(:adapter => "sqlite3", :database => ":memory:")
-ActiveRecord::Base.logger ||= Logger.new(STDOUT)  
+ActiveRecord::Base.logger ||= Logger.new(STDOUT)
 ActiveRecord::Base.logger.level = Logger::WARN
 
 ActiveRecord::Base.silence do
   ActiveRecord::Schema.define(:version => 1) do
     self.verbose = false
-    
+
     create_table :messages do |t|
       t.string    :title
       t.text      :body
@@ -32,12 +32,12 @@ ActiveRecord::Base.silence do
       t.boolean   :read,          :null => false, :default => false
       t.timestamps
     end
-    
+
     create_table :users do |t|
       t.string :name
       t.timestamps
     end
-    
+
     execute "
       INSERT INTO
         messages (id, title, body, created_at, updated_at)
@@ -50,5 +50,5 @@ MongoMapper.database = "historical-test"
 MongoMapper.database.collections.each(&:remove)
 
 Spec::Runner.configure do |config|
-  
+
 end
