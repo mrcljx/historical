@@ -8,11 +8,10 @@ module Historical
       ::ActiveRecord::Base.send(:extend, Historical::ActiveRecord)
     end
 
-    initializer "historical.create_classes" do
-      ::ActiveSupport.on_load :after_initialize do
-        Historical.reset!
-        Historical.boot!
-      end
+    # reload models each request
+    config.to_prepare do
+      Historical.reset!
+      Historical.boot!
     end
   end
 end

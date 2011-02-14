@@ -34,6 +34,7 @@ module Historical
         # Generates the customized classes ({Models::ModelVersion}, {Models::ModelVersion::Meta}, {Models::ModelVersion::Diff}) for this model.
         def generate_historical_models!
           return if historical_version_class
+          return unless table_exists?
           builder = Historical::ClassBuilder.new(self)
           builder.apply!
         end

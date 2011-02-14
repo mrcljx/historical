@@ -95,7 +95,7 @@ describe "A historical model" do
     @msg = Message.create(:title => "Hello")
     @msg.title += "Different"
     @msg.save!
-    
+
     version_count = lambda { @msg.history.versions.count }
 
     lambda do
@@ -104,11 +104,11 @@ describe "A historical model" do
       @msg.save!
     end.should_not change(version_count, :call)
   end
-    
+
   it "should not create new versions if nothing changed" do
     @msg = Message.create(:title => "Hello")
     @msg.update_attributes(:title => @msg.title).should be_true
-    
+
     version_count = lambda { @msg.history.versions.count }
 
     lambda do
@@ -163,12 +163,12 @@ describe "A historical model" do
       grouped[:stamped_on].new_value.should == date
       grouped[:stamped_on].old_value.should == nil
     end
-    
+
     it "should log the spawned version" do
       m = Message.create(:title => "a")
       m.title = "b"
       m.save!
-      
+
       m.history.latest_version.should == m.spawned_version
     end
 
@@ -344,7 +344,6 @@ describe "A historical model" do
 
   context "with customization" do
     before :each do
-      puts AuditedMessage.historical_meta_class
       AuditedMessage.current_user = nil
     end
 
