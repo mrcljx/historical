@@ -1,22 +1,24 @@
 require 'rubygems'
+require 'bundler'
+begin
+  Bundler.setup(:default, :development)
+rescue Bundler::BundlerError => e
+  $stderr.puts e.message
+  $stderr.puts "Run `bundle install` to install missing gems"
+  exit e.status_code
+end
 require 'rake'
 
-begin
-  require 'jeweler'
-  Jeweler::Tasks.new do |gem|
-    gem.name = "historical"
-    gem.summary = %Q{DRY and serialization-free versioning for ActiveRecord}
-    gem.description = %Q{Rewrite of the original historical-plugin using MongoDB}
-    gem.email = "marcel@northdocks.com"
-    gem.homepage = "http://github.com/sirlantis/historical"
-    gem.authors = ["Marcel Jackwerth"]
-    gem.add_development_dependency "rspec", "~>1.0"
-    # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
-  end
-  Jeweler::GemcutterTasks.new
-rescue LoadError
-  puts "Jeweler (or a dependency) not available. Install it with: gem install jeweler"
+require 'jeweler'
+Jeweler::Tasks.new do |gem|
+  gem.name = "historical"
+  gem.summary = %Q{DRY and serialization-free versioning for ActiveRecord}
+  gem.description = %Q{Rewrite of the original historical-plugin using MongoDB}
+  gem.email = "marcel@northdocks.com"
+  gem.homepage = "http://github.com/sirlantis/historical"
+  gem.authors = ["Marcel Jackwerth"]
 end
+Jeweler::RubygemsDotOrgTasks.new
 
 require 'spec/rake/spectask'
 Spec::Rake::SpecTask.new(:spec) do |spec|
@@ -30,8 +32,6 @@ Spec::Rake::SpecTask.new(:rcov) do |spec|
   spec.rcov = true
 end
 
-task :spec => :check_dependencies
-
 task :default => :spec
 
 require 'yard'
@@ -41,9 +41,9 @@ class YARD::Handlers::Ruby::Legacy::MongoHandler < YARD::Handlers::Ruby::Legacy:
   def process
     match = statement.tokens.to_s.match(/^(one|many|key)\s+:([a-zA-Z0-9_]+)/)
     return unless match
-    
+
     type, method = match[1], match[2]
-    
+
     case type
     when "many"
       register(MethodObject.new(namespace, method) do |obj|

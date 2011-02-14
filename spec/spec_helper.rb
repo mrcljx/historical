@@ -8,7 +8,6 @@ require 'rubygems'
 
 gem "rails", ">= 3.0.0"
 
-require 'ruby-debug'
 require 'active_support'
 require 'active_support/test_case'
 require 'active_record'

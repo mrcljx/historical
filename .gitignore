@@ -1,6 +1,7 @@
 
 *.db
 *.log
+Gemfile.lock
 previous_failures.txt
 /pkg
 /.yardoc
