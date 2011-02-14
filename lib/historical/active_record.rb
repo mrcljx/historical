@@ -96,7 +96,7 @@ module Historical
 
             v.meta = self.class.historical_meta_class.new.tap do |m|
               m.creation = (mode == :create)
-              m.created_at = Time.now
+              m.created_at = Time.now.utc
             end
 
             previous = v.previous

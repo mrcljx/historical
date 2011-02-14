@@ -7,10 +7,12 @@ module Historical
     initializer "historical.attach_to_active_record" do
       ::ActiveRecord::Base.send(:extend, Historical::ActiveRecord)
     end
-    
-    config.to_prepare do
-      Historical.reset!
-      Historical.boot!
+
+    initializer "historical.create_classes" do
+      ::ActiveSupport.on_load :after_initialize do
+        Historical.reset!
+        Historical.boot!
+      end
     end
   end
 end
