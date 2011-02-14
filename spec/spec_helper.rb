@@ -47,16 +47,18 @@ end
 
 config = YAML::load(File.read(File.join(File.dirname(__FILE__), 'mongo_mapper.yml')))["test"]
 
+mongodb = nil
 if config["standalone"]
   mongodb = fork do
-    puts "Launching standanlone MongoDB"
+    puts "Launching standalone MongoDB"
+    config_path = File.join(File.dirname(__FILE__), 'standalone.conf')
     dbpath = File.join(File.dirname(__FILE__), '..', 'tmp/db')
     `rm -rf #{dbpath}`
     `mkdir -p #{dbpath}`
-    `mongod --port #{config["port"]} --dbpath #{dbpath}`
-    exit
+    exec "mongod --port #{config["port"]} --noprealloc --dbpath #{dbpath} --pidfilepath #{dbpath} --config #{config_path} > /dev/null 2>&1"
   end
 
+  puts "Waiting for MongoDB to start"
   sleep 3
 end
 
@@ -66,4 +68,12 @@ MongoMapper.database.collections.each(&:remove)
 
 Spec::Runner.configure do |config|
 
+end
+
+at_exit do
+  if mongodb
+    puts "Killing standalone MongoDB (pid:#{mongodb})"
+    Process.kill("KILL", mongodb)
+    puts "Killed."
+  end
 end

@@ -3,6 +3,7 @@
 *.log
 Gemfile.lock
 previous_failures.txt
+/coverage
 /pkg
 /tmp
 /.yardoc
