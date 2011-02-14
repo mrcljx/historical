@@ -60,9 +60,13 @@ module Historical
   end
 
   def self.register(klass, now = false)
-    if (now or booted?) and klass.table_exists?
-      klass.generate_historical_models!
-      historical_models << klass
+    if now or booted?
+      if klass.table_exists?
+        klass.generate_historical_models!
+        historical_models << klass
+      else
+        # puts "Warning: Table for class #{klass} does not exist."
+      end
     else
       pending_models << klass
     end
