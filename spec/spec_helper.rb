@@ -45,7 +45,23 @@ ActiveRecord::Base.silence do
   end
 end
 
-MongoMapper.database = "historical-test"
+config = YAML::load(File.read(File.join(File.dirname(__FILE__), 'mongo_mapper.yml')))["test"]
+
+if config["standalone"]
+  mongodb = fork do
+    puts "Launching standanlone MongoDB"
+    dbpath = File.join(File.dirname(__FILE__), '..', 'tmp/db')
+    `rm -rf #{dbpath}`
+    `mkdir -p #{dbpath}`
+    `mongod --port #{config["port"]} --dbpath #{dbpath}`
+    exit
+  end
+
+  sleep 3
+end
+
+MongoMapper.connection = Mongo::Connection.new(config["host"], config["port"])
+MongoMapper.database = config["database"]
 MongoMapper.database.collections.each(&:remove)
 
 Spec::Runner.configure do |config|

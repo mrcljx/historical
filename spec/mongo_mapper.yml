@@ -1,0 +1,5 @@
+test:
+  database: "historical-test"
+  host: "localhost"
+  port: 35891
+  standalone: true

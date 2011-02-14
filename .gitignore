@@ -4,5 +4,6 @@
 Gemfile.lock
 previous_failures.txt
 /pkg
+/tmp
 /.yardoc
 /doc
