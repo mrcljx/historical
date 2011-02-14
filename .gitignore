@@ -1,6 +1,7 @@
 
 *.db
 *.log
+*.tmproj
 Gemfile.lock
 previous_failures.txt
 /coverage
