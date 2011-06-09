@@ -1,5 +1,5 @@
 source "http://rubygems.org"
-gem "mongo_mapper", ">= 0.8.6"
+gem "mongo_mapper", ">= 0.9.0"
 gem "rails", ">= 3.0"
 
 group :development do
