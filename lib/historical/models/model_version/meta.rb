@@ -5,20 +5,20 @@ module Historical::Models
       include MongoMapper::EmbeddedDocument
       plugin Historical::MongoMapper::SciAntidote
       plugin Historical::MongoMapper::Enhancements
-      
+
       key :created_at,  Time,     :required => true
-      key :creation,    Boolean,  :required => true
-      
+      key :creation,    Boolean
+
       alias :creation? :creation
-      
+
       def update?
         !creation?
       end
-      
+
       def created_at=(time)
         write_key :created_at, time.utc
       end
-    
+
       # Retrieve customized class definition for a record class (e.g. TopicMeta, MessageMeta)
       # @return [Class]
       def self.for_class(source_class)
